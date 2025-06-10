@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM --platform=linux/amd64 node:20-bullseye AS base
 WORKDIR /app
 
 # Install dependencies only when needed
@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --force
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -16,8 +16,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set Next.js telemetry to disabled
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Rebuild LightningCSS
+RUN npm rebuild lightningcss
 
 RUN npm run build
 
