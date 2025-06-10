@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image";
-import {History, Info, Settings} from "lucide-react"
+import {History, Info, Plus, Settings} from "lucide-react"
 
 import {
   Sidebar,
@@ -25,43 +25,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {CreditsDialog} from "@/components/credits-dialog";
 import ResultPreviewCard from "@/components/result-preview-card";
-import {getAllJobs} from "@/lib/api";
-import {DockingJobPreview} from "@/app/models";
+import {useDockingStore} from "@/store/docking-store";
+import {Button} from "@/components/ui/button";
+
+const navMain = [
+  {
+    title: "History",
+    icon: History,
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const navMain = [
-    {
-      title: "History",
-      icon: History,
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-    },
-  ];
-  const [jobs, setJobs] = React.useState<DockingJobPreview[]>([]);
+  const { jobs, isLoading, setCurrentJobId, createJob } = useDockingStore();
   const [sortBy, setSortBy] = React.useState<string>("time-desc");
   const [activeItem, setActiveItem] = React.useState(navMain[0]);
   const [creditsDialogOpen, setCreditsDialogOpen] = React.useState(false);
-
   const { setSidebarOpen } = useSidebar();
 
+
   const { highest, lowest } = React.useMemo(() => {
-    const highest = Math.max(...jobs.map((job: DockingJobPreview) => job.best_complex.delta_g))
-    const lowest = Math.min(...jobs.map((job: DockingJobPreview) => job.best_complex.delta_g))
+    const validJobs = jobs.filter(job =>
+      job.complexes && job.best_complex_nr != null
+    );
+    const highest = Math.max(...validJobs.map((job) => job.complexes[job.best_complex_nr!].delta_g)) ?? 0
+    const lowest = Math.min(...validJobs.map((job) => job.complexes[job.best_complex_nr!].delta_g)) ?? 0
     return { highest, lowest }
   }, [jobs]);
-
-  React.useEffect(() => {
-    getAllJobs().then((fetchedData: DockingJobPreview[]) => {
-        if (Array.isArray(fetchedData)) {
-            setJobs(fetchedData);
-        }
-    })
-  }, []);
 
   return (
     <Sidebar
@@ -160,27 +157,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </Select>
           </div>
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="px-0 pt-0">
+        <SidebarContent className="gap-0">
+          <SidebarGroup className={"relative top-0 border-b p-4 mb-2 pt-4"}>
+            {isLoading ?
+                <Skeleton className="h-8 w-full" />
+                : <Button variant="outline" onClick={createJob}>Create new structure <Plus/></Button>}
+          </SidebarGroup>
+          <SidebarGroup className={!isLoading && jobs.length == 0 ? "h-full justify-center px-0 pt-0" : "px-0 pt-0"}>
             <SidebarGroupContent>
               {
-                jobs
-                  .slice()
-                  .sort((a, b) => {
-                    if (sortBy === "time-asc") return new Date(a.created).getTime() - new Date(b.created).getTime();
-                    if (sortBy === "time-desc") return new Date(b.created).getTime() - new Date(a.created).getTime();
-                    if (sortBy === "score-asc") return a.best_complex.delta_g - b.best_complex.delta_g;
-                    if (sortBy === "score-desc") return b.best_complex.delta_g - a.best_complex.delta_g;
-                    return 0;
-                  })
-                  .map((job: DockingJobPreview, idx) => (
-                    <div
-                      key={job.job_id || idx}
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                    >
-                      <ResultPreviewCard job={job} highest={highest} lowest={lowest} />
+                isLoading ? (
+                  Array(5).fill(0).map((_, index) => (
+                    <div key={index} className="p-4 pt-0 border-b last:border-b-0">
+                      <Skeleton className="h-[300px] w-full" />
                     </div>
                   ))
+                ) : (
+                    jobs.length == 0 ? (
+                      <div className="h-full w-full flex flex-col items-center justify-center">
+                        <Image src="/dna_broken.svg" alt="broken dna icon" width={80} height={80} className="mb-4 rotate-45" />
+                        <p className="text-center text-muted-foreground">No structures found.<br />Please start designing your molecule.</p>
+                      </div>
+                    ) : (
+                    jobs
+                      .slice()
+                      .sort((a, b) => {
+                        if (sortBy === "time-asc") return new Date(a.created).getTime() - new Date(b.created).getTime();
+                        if (sortBy === "time-desc") return new Date(b.created).getTime() - new Date(a.created).getTime();
+                        if (sortBy === "score-asc") return a.complexes[a.best_complex_nr!].delta_g - b.complexes[b.best_complex_nr!].delta_g;
+                        if (sortBy === "score-desc") return b.complexes[b.best_complex_nr!].delta_g - a.complexes[a.best_complex_nr!].delta_g;
+                        return 0;
+                      })
+                      .map((job, idx) => (
+                          <div
+                              key={job.job_id || idx}
+                              className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+                              onClick={() => setCurrentJobId(job.job_id)}
+                          >
+                            <ResultPreviewCard job={job} highest={highest} lowest={lowest}/>
+                          </div>
+                      )))
+                )
               }
             </SidebarGroupContent>
           </SidebarGroup>

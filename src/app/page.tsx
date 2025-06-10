@@ -1,6 +1,8 @@
 'use client'
 
 import * as React from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 import {AppSidebar} from "@/components/app-sidebar";
 import {
@@ -17,26 +19,33 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
 import {ButtonRunDocking} from "@/components/button-run-docking";
 
-import {useMolecule, MoleculeProvider} from "@/context/molecule-context";
 
-function DockingControlWithContext() {
-  const { currentSmiles } = useMolecule();
-  const { results } = useDockingResults();
+import { useRDKit } from "@/hooks/use-rdkit";
+import { useDockingStore } from "@/store/docking-store";
+import { getSVGfromSMILES } from "@/lib/utils";
+import {CircleAlert} from "lucide-react";
 
-  const isExistingMolecule = React.useMemo(() => {
-    if (!currentSmiles || !results.length) return false;
-    return results.some(result => result.smiles === currentSmiles);
-  }, [currentSmiles, results]);
-
-  return <ButtonRunDocking variant={isExistingMolecule ? "rerun" : "new"} />;
-}
 
 export default function Home() {
+  const currentJob = useDockingStore((state) => state.getCurrentJob());
+  const { RDKit } = useRDKit();
+  const [svgString, setSvgString] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentJob?.smiles && RDKit) {
+      const svg = getSVGfromSMILES(currentJob.smiles, RDKit);
+      setSvgString(svg);
+    }
+  }, [currentJob, RDKit]);
+
+  const showMoleculeSVG = (currentJob?.job_status == "completed" || currentJob?.job_status == "running") && svgString;
+
   return (
     <SidebarProvider
       style={
@@ -65,18 +74,43 @@ export default function Home() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <DockingControlWithContext />
+          <ButtonRunDocking variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"} disabled={!currentJob || currentJob.job_status == "running" || currentJob?.qed < 0.4 || !currentJob.is_sub} />
         </header>
-        <MoleculeProvider>
-          <div className="h-[800px] flex p-4 gap-6">
-            <div className="w-1/2 bg-card">
+        { (currentJob?.qed ?? 1) < 0.4 && currentJob !== null ? (<div className="p-4 pb-0">
+          <Alert variant="destructive">
+            <CircleAlert/>
+            <AlertTitle>Heads up!</AlertTitle>
+            <AlertDescription>
+              Your QED is below 0.4, which means the molecule is likely not very drug-like. Please optimize it further
+              before docking.
+            </AlertDescription>
+          </Alert>
+        </div>) : ""}
+        { (!currentJob?.is_sub) ? (<div className="p-4 pb-0">
+          <Alert variant="destructive">
+            <CircleAlert/>
+            <AlertTitle>Heads up!</AlertTitle>
+            <AlertDescription>
+              The requiered substructure is not present in the current structure. Please add it to the structure before docking.
+            </AlertDescription>
+          </Alert>
+        </div>) : ""}
+        <div className="h-[800px] flex p-4 gap-6">
+          <div className="w-1/2 bg-card">
+            {showMoleculeSVG ? (
+              <Image
+                  src={`data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`}
+                  alt="current molecule"
+                  width={1000} height={1000}
+                  className="w-full h-full object-contain border rounded-xl" />
+            ) : (
               <KetcherFrameClient />
-            </div>
-            <div className="w-1/2 bg-card rounded-xl z-8 overflow-hidden">
-              <ThreeDmolFrameClient />
-            </div>
+            )}
           </div>
-        </MoleculeProvider>
+          <div className="w-1/2 bg-card rounded-xl z-8 overflow-hidden">
+            <ThreeDmolFrameClient />
+          </div>
+        </div>
         <div className="bg-card p-4 overflow-hidden flex-1">
             <DockingResults />
         </div>

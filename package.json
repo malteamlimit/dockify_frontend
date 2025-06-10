@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev/woTurbo": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,6 +13,7 @@
     "3dmol": "^2.4.2",
     "@next/env": "^15.4.0-canary.51",
     "@nivo/scatterplot": "^0.99.0",
+    "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-collapsible": "^1.1.11",
     "@radix-ui/react-context-menu": "^2.2.15",
@@ -32,7 +34,6 @@
     "browserify-fs": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "copy-webpack-plugin": "^13.0.0",
     "install": "^0.13.0",
     "ketcher-core": "^3.2.0",
     "ketcher-react": "^3.2.0",
@@ -44,7 +45,9 @@
     "react-dom": "^19.1.0",
     "recharts": "^2.15.3",
     "sonner": "^2.0.3",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "uuid": "^11.1.0",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

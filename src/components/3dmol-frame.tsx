@@ -1,56 +1,76 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useMolecule } from "@/context/molecule-context"
 import * as $3Dmol from "3dmol"
-import {Button} from "@/components/ui/button";
-import {Pause, Play} from "lucide-react";
-
+import { Button } from "@/components/ui/button"
+import { Pause, Play } from "lucide-react"
+import { useDockingStore } from "@/store/docking-store"
+import { generateConf } from "@/lib/api";
 
 const ThreeDmolFrame = () => {
   const viewerRef = useRef<$3Dmol.GLViewer | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const { moleculeData } = useMolecule()
+  const { getCurrentJob, setCurrentSdf } = useDockingStore()
   const [isSpinning, setIsSpinning] = useState(false)
+  const [currentModel, setCurrentModel] = useState("Molecule Editor")
+  const currentJob = getCurrentJob()
+
 
   useEffect(() => {
-    if (containerRef.current && !viewerRef.current) {
-      try {
-        viewerRef.current = $3Dmol.createViewer(containerRef.current,
-          {
-            defaultcolors: $3Dmol.elementColors.rasmol,
-            backgroundColor: "#eee",
-          }
-        )
-        viewerRef.current.zoomTo()
-        viewerRef.current.render()
-        viewerRef.current.setStyle({'stick': {'color': 'spectrum'}})
-        toggleSpin()
-      } catch (error) {
-        console.error("Error initializing 3DMol viewer:", error)
-      }
-    }
-
-    return () => {
-      if (viewerRef.current) {
-        viewerRef.current = null
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!viewerRef.current || !moleculeData) return
-
-    try {
+    if (!viewerRef.current) return
+    if (!currentJob) {
       viewerRef.current.clear()
-      viewerRef.current.addModel(moleculeData)
-      viewerRef.current.setStyle({'stick': {'color': 'spectrum'}})
-      viewerRef.current.zoomTo()
-      viewerRef.current.render()
-    } catch (error) {
-      console.error("Error loading molecule in 3DMol viewer:", error)
+      return
     }
-  }, [moleculeData])
+
+    async function getConf() {
+      let conformer = null
+
+      try {
+
+        viewerRef.current!.clear()
+
+        switch (true) {
+          case (currentJob!.best_complex_nr !== null):
+            const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${currentJob?.job_id}_${currentJob?.best_complex_nr}.pdb`;
+            const response = await fetch(url);
+            if (!response.ok) {
+              return
+            } else {
+              const pdbText = await response.text();
+              viewerRef.current!.addModel(pdbText, 'pdb')
+              viewerRef.current!.setStyle({chain: 'A'}, {cartoon: {color: 'green'}});
+              viewerRef.current!.setStyle({chain: 'B'}, {stick: {color: 'red'}});
+              setCurrentModel("Best Complex (Index " + currentJob!.best_complex_nr + ")")
+              break
+            }
+
+          case (!!currentJob!.sdf):
+            conformer = {sdf: currentJob!.sdf,}
+            viewerRef.current!.addModel(conformer.sdf, 'sdf')
+            viewerRef.current!.setStyle({'stick': {'color': 'spectrum'}})
+            setCurrentModel("Molecule Editor")
+            break;
+
+          default:
+            conformer = await generateConf(currentJob!.smiles, currentJob!.job_id)
+            setCurrentSdf(conformer)
+            viewerRef.current!.addModel(conformer.sdf, 'sdf')
+            viewerRef.current!.setStyle({'stick': {'color': 'spectrum'}})
+            setCurrentModel("Molecule Editor")
+
+        }
+
+        viewerRef.current!.zoomTo()
+        viewerRef.current!.render()
+
+      } catch (error) {
+          console.error("Error loading conformer in 3DMol viewer:", error)
+      }
+
+    }
+    getConf()
+  }, [currentJob])
 
   const toggleSpin = () => {
     if (!viewerRef.current) return
@@ -64,11 +84,30 @@ const ThreeDmolFrame = () => {
     }
   }
 
+    useEffect(() => {
+      if (containerRef.current && !viewerRef.current) {
+        try {
+          viewerRef.current = $3Dmol.createViewer(containerRef.current,
+            {
+              defaultcolors: $3Dmol.elementColors.rasmol,
+              backgroundColor: "#efefef",
+            }
+          )
+          viewerRef.current.zoomTo()
+          viewerRef.current.render()
+          viewerRef.current.setStyle({'stick': {'color': 'spectrum'}})
+          // toggleSpin()
+        } catch (error) {
+          console.error("Error initializing 3DMol viewer:", error)
+        }
+      }
+    }, []);
+
   return (
     <div className="w-full h-full relative">
       <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
         <div className="text-sm p-1.5 px-2.5 bg-white rounded-md shadow">
-          Current Model: from Molecule Editor
+          Current Model: {currentModel}
         </div>
         <Button variant="outline" className="size-8 cursor-pointer border-none shadow" onClick={toggleSpin}>
           {isSpinning ? <Pause /> : <Play />}

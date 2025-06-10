@@ -1,13 +1,13 @@
 'use client'
+
 // @ts-expect-error due to missing types for ketcher
 import {StandaloneStructServiceProvider} from "ketcher-standalone";
 import {Editor} from "ketcher-react";
 import {Ketcher} from "ketcher-core";
 import * as React from "react";
 
-import {useMolecule} from "@/context/molecule-context";
 import 'ketcher-react/dist/index.css';
-// import {smiles2mol} from "@/lib/utils";
+import { useDockingStore } from "@/store/docking-store";
 
 const structServiceProvider = new StandaloneStructServiceProvider()
 
@@ -35,47 +35,83 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function KetcherFrame() {
-
     const ketcherRef = React.useRef<Ketcher | null>(null);
-    const { setMoleculeData } = useMolecule()
+    const { setCurrentSmiles, setCurrentSdf, getCurrentJob, runPropertiesCalculation } = useDockingStore()
+    const [isInternalUpdate, setIsInternalUpdate] = React.useState(false);
+    const lastSmiles = React.useRef<string | null>(null);
+    const currentJob = getCurrentJob()
 
-      const updateMoleculeData = React.useCallback(async () => {
-        if (ketcherRef.current) {
+
+    const updateMoleculeData = React.useCallback(async () => {
+      if (ketcherRef.current && !isInternalUpdate) {
           try {
-            // const molData = await smiles2mol(await ketcherRef.current.getSmiles())
-            const molData = await ketcherRef.current.getSdf()
-            setMoleculeData(molData)
-          } catch (error) {
-            console.error("Failed to export molecule:", error)
+          const smiles = await ketcherRef.current.getSmiles()
+          if (smiles !== lastSmiles.current) {
+                lastSmiles.current = smiles;
+                setCurrentSdf(null)
+                setCurrentSmiles(smiles)
+                runPropertiesCalculation()
           }
+        } catch (error) {
+          console.error("Failed to export molecule:", error)
         }
-      }, [setMoleculeData])
+      }
+    }, [setCurrentSmiles])
 
     const handleOnInit = React.useCallback((ketcher: Ketcher) => {
       ketcherRef.current = ketcher
       // @ts-expect-error ketcher is not defined in window
       window.ketcher = ketcher
 
-      const initialData = "CN(C(=O)CN3CC2(CCN(C(=O)c1cccnc1)CC2)C3)c5ccc4COCc4c5"
-      ketcher.setMolecule(initialData).then(() => {
-        updateMoleculeData()
-      })
+      if (currentJob) {
+        setIsInternalUpdate(true);
+        ketcher.setMolecule(currentJob.smiles).then(() => {
+            lastSmiles.current = currentJob.smiles;
+            setIsInternalUpdate(false);
+        })
+      }
 
       ketcher.editor.subscribe('change', updateMoleculeData)
-    }, [updateMoleculeData])
+    }, [])
+
+    React.useEffect(() => {
+      if (!ketcherRef.current || !currentJob) return;
+
+
+      ketcherRef.current.getSmiles().then(currentKetcherSmiles => {
+        if (currentKetcherSmiles === currentJob.smiles) {
+          console.log("Ketcher molecule is already up-to-date.");
+          return;
+        }
+
+        setIsInternalUpdate(true);
+        ketcherRef.current!.setMolecule(currentJob.smiles)
+          .then(() => {
+            lastSmiles.current = currentJob.smiles;
+            setIsInternalUpdate(false);
+          })
+          .catch(err => {
+            console.error("Error setting molecule:", err);
+            setIsInternalUpdate(false);
+          });
+      });
+    }, [currentJob]);
+
 
     return (
       <ErrorBoundary>
-        <Editor
-          staticResourcesUrl={process.env.PUBLIC_URL!}
-          structServiceProvider={structServiceProvider}
-          onInit={handleOnInit}
-          errorHandler={message => {
-            if (process.env.NODE_ENV !== "production") {
-              throw new Error(message);
-            }
-          }}
-        />
+          <div className="h-full w-full overflow-hidden rounded-xl border-2">
+              <Editor
+              staticResourcesUrl={process.env.PUBLIC_URL!}
+              structServiceProvider={structServiceProvider}
+              onInit={handleOnInit}
+              errorHandler={message => {
+                  if (process.env.NODE_ENV !== "production") {
+                      throw new Error(message);
+                  }
+              }}
+          />
+          </div>
       </ErrorBoundary>
     )
 }

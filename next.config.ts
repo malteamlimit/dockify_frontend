@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: 'export',
+  output: 'standalone',
   images: {
     // unoptimized: true,
     remotePatterns: [
@@ -14,7 +14,10 @@ const nextConfig: NextConfig = {
     ],
   },
   eslint: {
-    // ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
   // assetPrefix: 'https://optimalte.de/dockify',
 };

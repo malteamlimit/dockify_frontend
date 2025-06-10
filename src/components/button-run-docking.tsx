@@ -14,43 +14,56 @@ import {
 } from "@/components/ui/toggle-group"
 import {ChevronDown, RotateCw} from "lucide-react";
 
-export function ButtonRunDocking({variant = "new"}: { variant?: "new" | "rerun" }) {
+import {toast} from "sonner";
+import {useDockingStore} from "@/store/docking-store";
+
+export function ButtonRunDocking({variant = "new", disabled = false}: { variant?: "new" | "rerun", disabled?: boolean }) {
+    const state = useDockingStore();
     const [name, setName] = React.useState("")
-    const [hadContent, setHadContent] = React.useState(false)
     const [runs, setRuns] = React.useState<string | null>(null)
     const [customRuns, setCustomRuns] = React.useState("")
     const [open, setOpen] = React.useState(false)
+    const job = state.getCurrentJob() ?? {name: ""}
 
     const isValid = name.trim() !== "" &&
       (runs !== null && runs !== "x" || (runs === "x" && /^\d{1,3}$/.test(customRuns) && parseInt(customRuns) > 0))
 
+    React.useEffect(() => {
+      setName(job.name);
+    }, [job.name]);
+
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value
-      if (newValue.trim() !== "") {
-        setHadContent(true)
-      }
       setName(newValue)
     }
 
     const handleRun = () => {
       if (isValid) {
         const runsValue = runs === "x" ? parseInt(customRuns) : parseInt(runs || "0")
-        console.log(`Running docking: ${name} with ${runsValue} runs`)
-        // API
+        useDockingStore.getState().runDocking(name, runsValue)
+          .then(() => {
+            setOpen(false)
+          })
+          .catch(() => {
+            toast.error("There was an error. Please try again later. :(")
+          })
         setOpen(false)
       }
     }
 
     React.useEffect(() => {
       if (!open) {
-        setHadContent(false)
+        setTimeout(() => {
+          setName(job.name);
+        }, 100);
       }
-    }, [open])
+    }, [job.name, open])
+
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button className="">
+            <Button disabled={disabled}>
                 {variant === "new" ? "Start new Docking" : "Extend with more Runs"} <ChevronDown/>
             </Button>
           </PopoverTrigger>
@@ -70,7 +83,7 @@ export function ButtonRunDocking({variant = "new"}: { variant?: "new" | "rerun" 
                     value={name}
                     onChange={handleNameChange}
                     placeholder="My fancy structure"
-                    className={`col-span-2 h-8 ${hadContent && name.trim() === "" ? "border-destructive focus-visible:ring-destructive/50" : ""}`}
+                    className={`col-span-2 h-8 ${name.trim() === "" ? "border-destructive focus-visible:ring-destructive/50" : ""}`}
                   />
                 </div>) : null}
                 <div className="grid grid-cols-3 items-center gap-4">

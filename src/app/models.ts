@@ -10,7 +10,7 @@ export interface Complex {
     delta_g: number;
     pairwise_energy: number;
     rmsd: number;
-    pose_path: string;
+    // pose_path: string;
 }
 
 export interface DockingJobPreview {
@@ -24,30 +24,28 @@ export interface DockingJobPreview {
     preview_path: string,
     runs: number,
     best_complex: Complex,
-    job?: DockingJobPreview
 }
 
 
 export interface DockingJob {
-    job_id: string;
-    request: {
-      created: string;
-      smiles: string;
-      constraints: any | null;
-      runs: number;
-    };
-    result: {
-      progress: number;
-      status: string;
-      ligand_properties: {
-        weight: number;
-        hbond_acc: number;
-        hbond_don: number;
-        logp: number;
-        qed: number;
-      } | null;
-      complex_results: Complex[];
-      best_complex_id: number | null;
-      error: string | null;
-    };
+    job_id: string,
+    name: string,
+    created: string,
+    constraints: ((number | number[] | string)[] | number)[],
+    job_status: "draft" | "running" | "completed" | "failed",
+    runs: number,
+    smiles: string,
+    sdf: string | null,
+    error: string | null,
+    progress: number,
+    progress_info: string,
+    weight: number | null,
+    hbond_acc: number,
+    hbond_don: number,
+    logp: number,
+    qed: number,
+    best_complex_nr: number,
+    complexes: Complex[],
+    is_sub: boolean
+    job?: DockingJob
 }

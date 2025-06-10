@@ -5,8 +5,9 @@ import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { translate } from "@/lib/translation";
-import { OctagonAlert } from "lucide-react";
+import {HardDriveDownload, OctagonAlert} from "lucide-react";
 import { themeQuartz } from 'ag-grid-community';
+import {Button} from "@/components/ui/button";
 ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 interface ComplexWithIndex extends Complex {
@@ -14,6 +15,15 @@ interface ComplexWithIndex extends Complex {
 }
 
 export function DockingResultsTable({ complexList, bestComplexId }: { complexList: Complex[], bestComplexId: number | null }) {
+
+  function handleDownload(job_id: string, id: number) {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${job_id}_${id}.pdb`;
+    const link = document.createElement('a');
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   const columnDefs: ColDef<ComplexWithIndex>[] = [
     {
@@ -130,7 +140,20 @@ export function DockingResultsTable({ complexList, bestComplexId }: { complexLis
     {
       field: "rmsd",
       headerName: "RMSD",
-      valueFormatter: (params: ValueFormatterParams<ComplexWithIndex, number>) => params.value!.toFixed(4),
+      valueFormatter: (params: ValueFormatterParams<ComplexWithIndex, number>) => {
+        if (params.value === null || params.value === undefined) {
+          return "N/A";
+        }
+        return params.value.toFixed(4)
+      },
+    },
+    {
+      field: "index",
+      headerName: "Download",
+      width: 10,
+      initialWidth: 10,
+      // @ts-expect-error download button job id is not defined ....
+      cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => <DownloadButton job_id={params.data?.job_id} id={params.value} handleDownload={handleDownload}/>,
     }
   ];
 
@@ -159,4 +182,24 @@ export function DockingResultsTable({ complexList, bestComplexId }: { complexLis
       />
     </div>
   );
+}
+
+
+interface DownloadButtonProps {
+  job_id: string;
+  id: number;
+  handleDownload: (job_id: string, id: number) => void;
+}
+
+export function DownloadButton({ job_id, id, handleDownload }: DownloadButtonProps) {
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      className="size-7 m-1.5 cursor-pointer"
+      onClick={() => handleDownload(job_id, id)}
+    >
+      <HardDriveDownload />
+    </Button>
+  )
 }
