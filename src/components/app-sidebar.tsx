@@ -182,6 +182,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     jobs
                       .slice()
                       .sort((a, b) => {
+                        if (sortBy === "score-asc" || sortBy === "score-desc") {
+                          const aHasValidComplex = a.best_complex_nr != null && a.complexes && a.complexes[a.best_complex_nr];
+                          const bHasValidComplex = b.best_complex_nr != null && b.complexes && b.complexes[b.best_complex_nr];
+
+                          if (!aHasValidComplex && !bHasValidComplex) return 0;
+                          if (!aHasValidComplex) return 1;
+                          if (!bHasValidComplex) return -1;
+                        }
+
                         if (sortBy === "time-asc") return new Date(a.created).getTime() - new Date(b.created).getTime();
                         if (sortBy === "time-desc") return new Date(b.created).getTime() - new Date(a.created).getTime();
                         if (sortBy === "score-asc") return a.complexes[a.best_complex_nr!].delta_g - b.complexes[b.best_complex_nr!].delta_g;
