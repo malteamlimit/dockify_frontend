@@ -56,7 +56,7 @@ function KetcherFrame() {
           console.error("Failed to export molecule:", error)
         }
       }
-    }, [setCurrentSmiles])
+    }, [isInternalUpdate, runPropertiesCalculation, setCurrentSdf, setCurrentSmiles])
 
     const handleOnInit = React.useCallback((ketcher: Ketcher) => {
       ketcherRef.current = ketcher
@@ -72,7 +72,7 @@ function KetcherFrame() {
       }
 
       ketcher.editor.subscribe('change', updateMoleculeData)
-    }, [])
+    }, [currentJob, updateMoleculeData])
 
     React.useEffect(() => {
       if (!ketcherRef.current || !currentJob) return;

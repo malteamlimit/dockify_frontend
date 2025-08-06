@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // assetPrefix: 'https://optimalte.de/dockify',
+  // assetPrefix: 'http://localhost:3000',
 };
 
 

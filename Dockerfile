@@ -1,52 +1,41 @@
-FROM --platform=linux/amd64 node:20-bullseye AS base
+# First stage: build the app
+FROM node:18-alpine AS builder
+
+# Set working directory
 WORKDIR /app
 
-# Install dependencies only when needed
-FROM base AS deps
-WORKDIR /app
+# Copy dependencies files
+COPY package.json package-lock.json ./
 
 # Install dependencies
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN npm ci --force
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
+# Copy app source
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Rebuild LightningCSS
-RUN npm rebuild lightningcss
-
+# Build the app in standalone mode
 RUN npm run build
 
-# Production image
-FROM base AS runner
+# Manually copy static files for standalone
+RUN cp -r .next/static .next/standalone/.next/static
+
+# Second stage: production image
+FROM node:18-alpine AS runner
+
+# Set working directory
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
+# Copy standalone output and static files
+COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/static ./.next/static
 
-# Set permissions for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Copy build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
+# Set environment variables (optional)
+ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
+# Expose the port
+EXPOSE 3000
+
+# Run the app
 CMD ["node", "server.js"]
