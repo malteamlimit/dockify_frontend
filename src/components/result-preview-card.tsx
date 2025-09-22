@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button"
 import {Ellipsis, HardDriveDownload, Trash2, Copy} from "lucide-react";
 
 import {DockingJob} from "@/app/models";
-import {perc2color, timeAgo} from "@/lib/utils";
+import {perc2color, timeAgo, handlePDBDownload} from "@/lib/utils";
 import {useDockingStore, } from "@/store/docking-store";
 import {TagNameAndRename} from "@/components/tag-name-and-rename";
 import {deleteJobById} from "@/lib/api";
@@ -64,20 +64,6 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
         toast.success("Job deleted successfully.");
       })
       .catch(() => toast.error("There was an error. Please try again later. :("))
-  }
-
-  const handleBestDownload = (jobId: string) => {
-    if (currentJob?.best_complex_nr !== null) {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${jobId}_${currentJob?.best_complex_nr}.pdb`;
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${job.name}_best_pose.pdb`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      toast.error("No best pose available for download.");
-    }
   }
 
   return (
@@ -169,7 +155,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                             <Copy />
                             Duplicate Structure
                           </DropdownMenuItem>
-                          {currentJob?.best_complex_nr !== null ? (<DropdownMenuItem onClick={() => handleBestDownload(job.job_id)}>
+                          {job.best_complex_nr !== null ? (<DropdownMenuItem onClick={() => handlePDBDownload(job, 'best')}>
                             <HardDriveDownload/>
                             Download Best Pose as PDB
                           </DropdownMenuItem>) : ""}
@@ -298,7 +284,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                 <Copy />
                 Duplicate Structure
               </ContextMenuItem>
-              {currentJob?.best_complex_nr !== null ? (<ContextMenuItem onClick={() => handleBestDownload(job.job_id)}>
+              {job.best_complex_nr !== null ? (<ContextMenuItem onClick={() => handlePDBDownload(job, 'best')}>
                 <HardDriveDownload/>
                 Download Best Pose as PDB
               </ContextMenuItem>) : ""}

@@ -1,5 +1,7 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import {clsx, type ClassValue} from "clsx"
+import {twMerge} from "tailwind-merge"
+import {DockingJob} from "@/app/models";
+import {toast} from "sonner";
 
 
 // ---------------------- Serialisation ----------------------
@@ -108,6 +110,48 @@ export function perc2color(perc: number, min: number, max: number) {
 }
 
 
+/**
+ * Handles the download of a PDB file for a given docking job and pose index.
+ * If the index is 'best', it downloads the best pose. Otherwise, it downloads
+ * the pose corresponding to the provided index.
+ *
+ * @param job - The docking job containing the poses.
+ * @param index - The index of the pose to download or 'best' for the best
+ * pose.
+ * @returns A promise that resolves when the download is initiated.
+ * @example
+ * // Download the best pose
+ * handlePDBDownload(job, 'best');
+ * // Download the pose at index 2
+ * handlePDBDownload(job, 2);
+ *
+ **/
+export async function handlePDBDownload(job: DockingJob, index: number | 'best')  {
 
+  if (index === 'best') {
+    if (job.best_complex_nr === null) {
+      toast.error("No best pose available for download.");
+      return;
+    }
+    index = job.best_complex_nr;
+  } else if (index < 0 || index >= job.runs) {
+    toast.error("Invalid pose index for download.");
+    return;
   }
+
+  const downloadName = index === job.best_complex_nr
+    ? `${job.name}_best_pose.pdb`
+    : `${job.name}_pose_${index + 1}.pdb`;
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${job.job_id}_${index}.pdb`;
+  const response = await fetch(url);
+  const blob = await response.blob();
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = downloadName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }

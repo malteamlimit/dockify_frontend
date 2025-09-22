@@ -1,29 +1,23 @@
-import { AgGridReact } from "ag-grid-react";
-import { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
-import { Complex } from "@/app/models";
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { translate } from "@/lib/translation";
+import {AgGridReact} from "ag-grid-react";
+import {ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
+import {Complex, DockingJob} from "@/app/models";
+import {ModuleRegistry, AllCommunityModule} from 'ag-grid-community';
+import {Badge} from "@/components/ui/badge";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
+import {translate} from "@/lib/translation";
 import {HardDriveDownload, OctagonAlert} from "lucide-react";
-import { themeQuartz } from 'ag-grid-community';
+import {themeQuartz} from 'ag-grid-community';
 import {Button} from "@/components/ui/button";
+import {handlePDBDownload} from "@/lib/utils";
 ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 interface ComplexWithIndex extends Complex {
   index: number;
 }
 
-export function DockingResultsTable({ complexList, bestComplexId }: { complexList: Complex[], bestComplexId: number | null }) {
-
-  function handleDownload(job_id: string, id: number) {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${job_id}_${id}.pdb`;
-    const link = document.createElement('a');
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+export function DockingResultsTable({ job }: { job: DockingJob }) {
+  const complexList = job.complexes ?? [];
+  const bestComplexId = job.best_complex_nr;
 
   const columnDefs: ColDef<ComplexWithIndex>[] = [
     {
@@ -152,8 +146,7 @@ export function DockingResultsTable({ complexList, bestComplexId }: { complexLis
       headerName: "Download",
       width: 10,
       initialWidth: 10,
-      // @ts-expect-error download button job id is not defined ....
-      cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => <DownloadButton job_id={params.data?.job_id} id={params.value} handleDownload={handleDownload}/>,
+      cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => <DownloadButton job={job} index={params.value} handleDownload={handlePDBDownload}/>,
     }
   ];
 
@@ -186,18 +179,18 @@ export function DockingResultsTable({ complexList, bestComplexId }: { complexLis
 
 
 interface DownloadButtonProps {
-  job_id: string;
-  id: number;
-  handleDownload: (job_id: string, id: number) => void;
+  job: DockingJob;
+  index: number;
+  handleDownload: (job: DockingJob, index: number) => void;
 }
 
-export function DownloadButton({ job_id, id, handleDownload }: DownloadButtonProps) {
+export function DownloadButton({ job, index, handleDownload }: DownloadButtonProps) {
   return (
     <Button
       variant="secondary"
       size="icon"
       className="size-7 m-1.5 cursor-pointer"
-      onClick={() => handleDownload(job_id, id)}
+      onClick={() => handleDownload(job, index)}
     >
       <HardDriveDownload />
     </Button>

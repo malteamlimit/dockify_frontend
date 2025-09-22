@@ -99,10 +99,7 @@ export function DockingResults() {
 
          <h3 className="text-lg font-medium">Docking Complexes</h3>
          <div className="w-full">
-           <DockingResultsTable
-               complexList={currentJob.complexes ?? []}
-               bestComplexId={currentJob.best_complex_nr}
-           />
+           <DockingResultsTable job={currentJob} />
          </div>
        </div>
      </CardContent>
@@ -111,4 +108,3 @@ export function DockingResults() {
 }
 
 export default DockingResults;
-
