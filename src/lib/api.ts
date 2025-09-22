@@ -81,7 +81,7 @@ export async function generateConf(smiles: string, job_id: string) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ smiles: smiles, job_id: job_id })
   });
-  if (!res.ok) throw new Error(`Failed to generate Con former for SMILES: ${smiles}`);
+  if (!res.ok) throw new Error(`Failed to generate Conformer for SMILES: ${smiles}`);
   return res.json(); // message
 }
 

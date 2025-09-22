@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// TODO: CI: deploy settings
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {

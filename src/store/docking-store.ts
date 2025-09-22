@@ -168,8 +168,8 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
   },
   createJob: async () => {
     const job = getDefaultJob()
-    const jobPublic_raw: string = await createJob(job)
-    const jobPublic: DockingJob = JSON.parse(jobPublic_raw);
+    const jobPublicRaw: string = await createJob(job)
+    const jobPublic: DockingJob = JSON.parse(jobPublicRaw);
     set((state) => {
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
