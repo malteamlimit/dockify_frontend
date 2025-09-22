@@ -26,25 +26,13 @@ import DockingResults from "@/components/results/docking-results";
 import {ButtonRunDocking} from "@/components/button-run-docking";
 
 
-import { useRDKit } from "@/hooks/use-rdkit";
 import { useDockingStore } from "@/store/docking-store";
-import { getSVGfromSMILES } from "@/lib/utils";
 import {CircleAlert} from "lucide-react";
 
 
 export default function Home() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
-  const { RDKit } = useRDKit();
-  const [svgString, setSvgString] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (currentJob?.smiles && RDKit) {
-      const svg = getSVGfromSMILES(currentJob.smiles, RDKit);
-      setSvgString(svg);
-    }
-  }, [currentJob, RDKit]);
-
-  const showMoleculeSVG = (currentJob?.job_status == "completed" || currentJob?.job_status == "running") && svgString;
+  const showMoleculeSVG = (currentJob?.job_status == "completed" || currentJob?.job_status == "running");
 
   return (
     <SidebarProvider
@@ -99,10 +87,13 @@ export default function Home() {
           <div className="w-1/2 bg-card">
             {showMoleculeSVG ? (
               <Image
-                  src={`data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`}
-                  alt="current molecule"
-                  width={1000} height={1000}
-                  className="w-full h-full object-contain border rounded-xl" />
+                src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${currentJob.job_id}.svg`}
+                alt="current molecule"
+                width="1000"
+                height="1000"
+                priority
+                className={`w-full h-full object-contain border rounded-xl`}
+              />
             ) : (
               <KetcherFrameClient />
             )}

@@ -109,22 +109,5 @@ export function perc2color(perc: number, min: number, max: number) {
 
 
 
-export function getSVGfromSMILES(smiles: string, RDKit: any) {
-  if (!RDKit) return null;
-
-  const options = {
-    scaleBondWidth: true,
-    addStereoAnnotation: true,
-    addAtomIndices: true,
-    addBondIndices: false,
-  }
-
-  try {
-    const mol = RDKit.get_mol(smiles);
-    const svg = mol.get_svg_with_highlights(JSON.stringify(options));
-    mol.delete();
-    return svg;
-  } catch {
-    return null;
   }
 }
