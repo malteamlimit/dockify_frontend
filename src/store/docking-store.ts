@@ -199,7 +199,7 @@ export function getDefaultJob(): DockingJob {
     runs: 0,
     // TODO: Fetch from Settings
     // smiles: 'CN(C(=O)CN3CC2(CCN(C(=O)c1cccnc1)CC2)C3)c5ccc4COCc4c5',
-    smiles: '[C]1([H])([H])[N][C]([H])([H])[C]21[C]([H])([H])[C]([H])([H])[N]([C]=[O])[C]([H])([H])[C]2([H])[H]',
+    smiles: 'O=[C]N1CCC2(CC1)C[N]C2',
     sdf: '',
     error: null,
     progress: 0,
