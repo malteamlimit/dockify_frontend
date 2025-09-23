@@ -265,14 +265,13 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                       <Skeleton className="w-full h-full"/>
                     )}
                     <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${job.job_id}.svg`}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${job.job_id}.svg${job.thumbnailRefresh ? `?v=${job.thumbnailRefresh}` : ''}`}
                       alt="structure preview"
                       width="1000"
                       height="1000"
                       priority
                       className={`${isExpanded ? 'mt-4' : ''} transition-all overflow-visible object-cover object-[50%_30%] w-full h-full`}
                       onLoad={() => setImageLoaded(true)}
-
                     />
                   </div>
                 </Card>

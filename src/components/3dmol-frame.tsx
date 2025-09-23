@@ -10,7 +10,7 @@ import { generateConf } from "@/lib/api";
 const ThreeDmolFrame = () => {
   const viewerRef = useRef<$3Dmol.GLViewer | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const { getCurrentJob, setCurrentSdf } = useDockingStore()
+  const { getCurrentJob, setCurrentSdf, refreshCurrentJobThumbnail } = useDockingStore()
   const [isSpinning, setIsSpinning] = useState(false)
   const [currentModel, setCurrentModel] = useState("Molecule Editor")
   const currentJob = getCurrentJob()
@@ -39,8 +39,8 @@ const ThreeDmolFrame = () => {
             } else {
               const pdbText = await response.text();
               viewerRef.current!.addModel(pdbText, 'pdb')
-              viewerRef.current!.setStyle({chain: 'A'}, {cartoon: {color: 'green'}});
-              viewerRef.current!.setStyle({chain: 'B'}, {stick: {color: 'red'}});
+              viewerRef.current!.setStyle({chain: 'A'}, {cartoon: {color: 'orange'}});
+              viewerRef.current!.setStyle({chain: 'B'}, {stick: {color: 'green'}});
               setCurrentModel("Best Complex (Index " + currentJob!.best_complex_nr + ")")
               break
             }
@@ -69,8 +69,11 @@ const ThreeDmolFrame = () => {
       }
 
     }
+
     getConf()
-  }, [currentJob])
+    refreshCurrentJobThumbnail();
+
+  }, [currentJob?.job_id, currentJob?.best_complex_nr, currentJob?.sdf, currentJob?.smiles])
 
   const toggleSpin = () => {
     if (!viewerRef.current) return

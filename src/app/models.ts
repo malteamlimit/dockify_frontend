@@ -46,6 +46,7 @@ export interface DockingJob {
     qed: number,
     best_complex_nr: number,
     complexes: Complex[],
-    is_sub: boolean
+    is_sub: boolean,
+    thumbnailRefresh?: number,
     job?: DockingJob
 }

@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { DockingJob } from '@/app/models';
 import {
   createJob,
-  generateConf,
   getAllJobs,
   getProps,
   runDocking as runDockingAPI,
@@ -37,6 +36,8 @@ interface DockingState {
   setCurrentName: (name: string) => void;
   runPropertiesCalculation: () => Promise<void>;
   runDocking: (name: string, runs: number) => Promise<void>;
+
+  refreshCurrentJobThumbnail: () => void;
 
   jobs: DockingJob[];
   removeJob: (jobId: string) => void;
@@ -183,7 +184,13 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
     })
-  }
+  },
+  refreshCurrentJobThumbnail: () => set((state) => {
+    const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
+    if (jobIndex >= 0) {
+      state.jobs[jobIndex].thumbnailRefresh = Date.now();
+    }
+  })
 })))
 
 
