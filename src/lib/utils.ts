@@ -13,8 +13,8 @@ export function cn(...inputs: ClassValue[]) {
 // ---------------------- Time and Date Utils ----------------------
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
 function getFormattedDate(date: Date, prefomattedDate: string | boolean = false, hideYear = false) {
