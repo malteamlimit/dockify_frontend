@@ -253,7 +253,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                   <div className="overflow-hidden rounded-xl border h-full w-full relative">
                     <div className="absolute z-10 w-full p-3 pt-2 flex items-center justify-between gap-1">
                       <div className="flex items-center justify-between w-full gap-1">
-                        <div className="truncate min-w-0 overflow-hidden">
+                        <div className="truncate min-w-0 overflow-hidden bg-white/70 pr-1 rounded-md">
                           <TagNameAndRename job={job} />
                         </div>
                         <Badge variant="outline" className="flex-shrink-0 bg-card">
@@ -267,10 +267,9 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                     <Image
                       src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${job.job_id}.svg${job.thumbnailRefresh ? `?v=${job.thumbnailRefresh}` : ''}`}
                       alt="structure preview"
-                      width="1000"
-                      height="1000"
+                      fill
                       priority
-                      className={`${isExpanded ? 'mt-4' : ''} transition-all overflow-visible object-cover object-[50%_30%] w-full h-full`}
+                      className={`${isExpanded ? 'mt-4' : 'mt-1'} transition-all`}
                       onLoad={() => setImageLoaded(true)}
                     />
                   </div>
