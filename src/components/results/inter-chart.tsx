@@ -1,7 +1,7 @@
 "use client"
 
 import {useState} from "react";
-import {CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer} from "recharts"
+import {CartesianGrid, Line, LineChart, XAxis, YAxis} from "recharts"
 
 import {
   Card,
