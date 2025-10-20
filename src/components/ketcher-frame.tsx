@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     if (this.state.hasError) {
       return process.env.NODE_ENV === "production"
         ? null
-        : "<div>Ketcher couldn't be started :(</div>";
+        : <div>Ketcher could not be started :(</div>;
     }
     return this.props.children;
   }
