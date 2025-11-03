@@ -110,6 +110,8 @@ export function perc2color(perc: number, min: number, max: number) {
 }
 
 
+
+// ---------------------- Downloads ----------------------
 /**
  * Handles the download of a PDB file for a given docking job and pose index.
  * If the index is 'best', it downloads the best pose. Otherwise, it downloads
@@ -147,6 +149,10 @@ export async function handlePDBDownload(job: DockingJob, index: number | 'best')
   const response = await fetch(url);
   const blob = await response.blob();
 
+  downloadBlob(blob, downloadName);
+}
+
+export function downloadBlob(blob: Blob, downloadName: string) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = downloadName;

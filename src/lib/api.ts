@@ -98,20 +98,38 @@ export async function getProps(smiles: string, job_id: string) {
 
 
 
+// ---------------------- DB Transfer ----------------------
 
-
-
-
-
-
-
-
-
-export async function getJobById(jobId: string) {
-  const res = await fetch(`${API_BASE_URL}/data/${jobId}`, {
-    method: 'GET',
-  });
-  if (!res.ok) throw new Error(`Failed to fetch job ${jobId}`);
-  return res.json(); // DockingJobPublic
+export async function exportDatabase() {
+    const res = await fetch(`${API_BASE_URL}/database/export`, {
+        method: 'GET',
+    });
+    if (!res.ok) {
+        throw new Error((await res.json()).detail || 'Failed to export database')
+    }
+    return res.blob();
 }
 
+export async function importDatabase(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE_URL}/database/import`, {
+        method: 'POST',
+        body: formData,
+    });
+    if (!res.ok) {
+        throw new Error((await res.json()).detail || 'Failed to import database')
+    }
+    return res.json();
+}
+
+export async function resetDatabase() {
+    const res = await fetch(`${API_BASE_URL}/database/reset`, {
+        method: 'POST',
+    });
+    if (!res.ok) {
+        throw new Error((await res.json()).detail || 'Failed to reset database')
+    }
+    return res.json();
+}
