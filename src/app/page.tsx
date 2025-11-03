@@ -52,7 +52,7 @@ export default function Home() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Dockify</BreadcrumbLink>
+                  <BreadcrumbLink className={'hover:text-muted-foreground'}>Dockify</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block"/>
                 <BreadcrumbItem>

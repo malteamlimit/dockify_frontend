@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
+import {Button, buttonVariants} from "@/components/ui/button"
 import {Ellipsis, HardDriveDownload, Trash2, Copy} from "lucide-react";
 
 import {DockingJob} from "@/app/models";
@@ -61,7 +61,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
     deleteJobById(jobId)
       .then(() => {
         removeJob(jobId);
-        toast.success("Job deleted successfully.");
+        toast.success("Job successfully deleted.");
       })
       .catch(() => toast.error("There was an error. Please try again later. :("))
   }
@@ -304,7 +304,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(job.job_id)}>Continue</AlertDialogAction>
+              <AlertDialogAction className={buttonVariants({variant: 'destructive'})} onClick={() => handleDelete(job.job_id)}>Continue</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

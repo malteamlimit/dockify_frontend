@@ -32,7 +32,7 @@ export default function RootLayout({
         <AppProvider>
           <main>{children}</main>
         </AppProvider>
-        <Toaster />
+        <Toaster richColors theme={'light'} />
       </body>
     </html>
   );
