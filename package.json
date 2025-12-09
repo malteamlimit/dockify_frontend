@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "3dmol": "^2.4.2",
     "@next/env": "^15.4.0-canary.51",
     "@nivo/scatterplot": "^0.99.0",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -30,7 +31,6 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@rdkit/rdkit": "^2025.3.2-1.0.0",
     "@tanstack/react-table": "^8.21.3",
-    "3dmol": "^2.4.2",
     "ag-grid-react": "^33.3.0",
     "browserify-fs": "^1.0.0",
     "class-variance-authority": "^0.7.1",
@@ -40,7 +40,7 @@
     "ketcher-react": "^3.8.0",
     "ketcher-standalone": "^3.8.0",
     "lucide-react": "^0.511.0",
-    "next": "15.3.2",
+    "next": "16.0.7",
     "next-themes": "^0.4.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -61,6 +61,5 @@
     "tailwindcss": "^4.1.7",
     "tw-animate-css": "^1.3.0",
     "typescript": "^5.8.3"
-  },
-  "packageManager": "npm@^11.4.1"
+  }
 }
