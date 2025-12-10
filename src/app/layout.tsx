@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { StrictMode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/components/providers/app-provider";
@@ -29,10 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+      <StrictMode>
         <AppProvider>
           <main>{children}</main>
         </AppProvider>
         <Toaster richColors theme={'light'} />
+      </StrictMode>
       </body>
     </html>
   );
