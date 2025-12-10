@@ -37,7 +37,6 @@ import {useDockingStore, } from "@/store/docking-store";
 import {TagNameAndRename} from "@/components/tag-name-and-rename";
 import {deleteJobById} from "@/lib/api";
 import {toast} from "sonner";
-import {Skeleton} from "@/components/ui/skeleton";
 
 export default function ResultPreviewCard({ job, highest, lowest }: { job: DockingJob, highest: number, lowest: number }) {
   const { removeJob, getCurrentJob, createCopy } = useDockingStore();
@@ -247,7 +246,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                 </Card>
 
                 <Card
-                  className={`w-full p-0 relative -top-29 aspect-[7/6] border-none overflow-hidden transition-all duration-300 ease-in-out
+                  className={`w-full p-0 bg-white relative -top-29 aspect-[7/6] border-none overflow-hidden transition-all duration-300 ease-in-out
                               ${isExpanded ? '-top-[10.5rem] aspect-[1/1]' : ''}
                               ${job.job_id === currentJob?.job_id ? 'shadow-[0px_0px_2px_2px_rgba(229,127,78,0.65)]' : ''}`}>
                   <div className="overflow-hidden rounded-xl border h-full w-full relative">
@@ -261,15 +260,12 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                         </Badge>
                       </div>
                     </div>
-                    {!isImageLoaded && (
-                      <Skeleton className="w-full h-full"/>
-                    )}
                     <Image
                       src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${job.job_id}.svg${job.thumbnailRefresh ? `?v=${job.thumbnailRefresh}` : ''}`}
                       alt="structure preview"
                       fill
                       priority
-                      className={`${isExpanded ? 'mt-4' : 'mt-1'} transition-all`}
+                      className={`${isExpanded ? 'mt-4 pb-2' : 'mt-1'} ${!isImageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-all`}
                       onLoad={() => setImageLoaded(true)}
                     />
                   </div>

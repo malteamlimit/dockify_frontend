@@ -163,9 +163,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent className="gap-0">
           {activeItem?.title === "History" ? (
             <>
-              <SidebarGroup className={"relative top-0 border-b p-4 mb-2 pt-4"}>
+              <SidebarGroup className={"relative top-0 border-b p-4 pt-4"}>
                 {isLoading ?
-                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-9 w-full" />
                     : <Button variant="outline" onClick={createJob}>Create new structure <Plus/></Button>}
               </SidebarGroup>
               <SidebarGroup className={!isLoading && jobs.length == 0 ? "h-full justify-center px-0 pt-0" : "px-0 pt-0"}>
@@ -173,8 +173,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {
                     isLoading ? (
                       Array(5).fill(0).map((_, index) => (
-                        <div key={index} className="p-4 pt-0 border-b last:border-b-0">
-                          <Skeleton className="h-[300px] w-full" />
+                        <div key={index} className="p-4 border-b last:border-b-0">
+                          <Skeleton className="h-75 w-full" />
                         </div>
                       ))
                     ) : (
