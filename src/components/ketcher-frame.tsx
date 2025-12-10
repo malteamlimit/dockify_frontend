@@ -1,118 +1,143 @@
 'use client'
 
-// @ts-expect-error due to missing types for ketcher
-import {StandaloneStructServiceProvider} from "ketcher-standalone";
-import {Editor} from "ketcher-react";
-import {Ketcher} from "ketcher-core";
+import {Ketcher, StructServiceProvider} from "ketcher-core";
+import { Editor, InfoModal } from "ketcher-react";
+import { StandaloneStructServiceProvider } from "ketcher-standalone";
 import * as React from "react";
 
 import 'ketcher-react/dist/index.css';
 import { useDockingStore } from "@/store/docking-store";
 
-const structServiceProvider = new StandaloneStructServiceProvider()
-
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error(error, info);
-    }
-  }
-  render() {
-    if (this.state.hasError) {
-      return process.env.NODE_ENV === "production"
-        ? null
-        : <div>Ketcher could not be started :(</div>;
-    }
-    return this.props.children;
-  }
-}
+const structServiceProvider = new StandaloneStructServiceProvider() as StructServiceProvider;
 
 function KetcherFrame() {
-    const ketcherRef = React.useRef<Ketcher | null>(null);
-    const { setCurrentSmiles, setCurrentSdf, getCurrentJob, runPropertiesCalculation } = useDockingStore()
-    const [isInternalUpdate, setIsInternalUpdate] = React.useState(false);
-    const lastSmiles = React.useRef<string | null>(null);
-    const currentJob = getCurrentJob()
-
-
-    const updateMoleculeData = React.useCallback(async () => {
-      if (ketcherRef.current && !isInternalUpdate) {
-          try {
-          const smiles = await ketcherRef.current.getSmiles()
-          if (smiles !== lastSmiles.current) {
-                lastSmiles.current = smiles;
-                setCurrentSdf(null)
-                setCurrentSmiles(smiles)
-                runPropertiesCalculation()
-          }
-        } catch (error) {
-          console.error("Failed to export molecule:", error)
-        }
-      }
-    }, [isInternalUpdate, runPropertiesCalculation, setCurrentSdf, setCurrentSmiles])
-
-    const handleOnInit = React.useCallback((ketcher: Ketcher) => {
-      ketcherRef.current = ketcher
-      // @ts-expect-error ketcher is not defined in window
-      window.ketcher = ketcher
-
-      if (currentJob) {
-        setIsInternalUpdate(true);
-        ketcher.setMolecule(currentJob.smiles).then(() => {
-            lastSmiles.current = currentJob.smiles;
-            setIsInternalUpdate(false);
-        })
-      }
-
-      ketcher.editor.subscribe('change', updateMoleculeData)
-    }, [currentJob, updateMoleculeData])
-
     React.useEffect(() => {
-      if (!ketcherRef.current || !currentJob) return;
+      console.log('KetcherFrame mounted');
+      return () => console.log('KetcherFrame unmounted');
+    }, []);
 
+    const ketcherRef = React.useRef<Ketcher | null>(null);
+    const isLoadingRef = React.useRef(false);
+    const currentLoadingJobIdRef = React.useRef<string | null>(null);
 
-      ketcherRef.current.getSmiles().then(currentKetcherSmiles => {
-        if (currentKetcherSmiles === currentJob.smiles) {
-          console.log("Ketcher molecule is already up-to-date.");
-          return;
-        }
+    const [hasError, setHasError] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
+    const [isLocked, setIsLocked] = React.useState(true);
+    const scrollPositionRef = React.useRef(0);
 
-        setIsInternalUpdate(true);
-        ketcherRef.current!.setMolecule(currentJob.smiles)
+    const currentJobId = useDockingStore((state) => state.currentJobId);
+
+    // loading molecule when currentJobId changes
+    React.useEffect(() => {
+      if (!ketcherRef.current || !currentJobId) return;
+
+      const smiles = useDockingStore.getState().getCurrentJob()?.smiles;
+      if (!smiles) return;
+
+      isLoadingRef.current = true;
+      currentLoadingJobIdRef.current = currentJobId;
+
+      ketcherRef.current.setMolecule(smiles)
+        .then(() => {
+          if (currentLoadingJobIdRef.current === currentJobId) {
+            isLoadingRef.current = false;
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load molecule:', err);
+          isLoadingRef.current = false;
+        });
+
+    }, [currentJobId]);
+
+    // first init on component mount
+    const handleOnInit = React.useCallback((ketcher: Ketcher) => {
+      window.ketcher = ketcher;
+      ketcherRef.current = ketcher;
+
+      const job = useDockingStore.getState().getCurrentJob();
+      if (job?.smiles) {
+        isLoadingRef.current = true;
+        currentLoadingJobIdRef.current = job.job_id;
+
+        ketcher.setMolecule(job.smiles)
           .then(() => {
-            lastSmiles.current = currentJob.smiles;
-            setIsInternalUpdate(false);
+            isLoadingRef.current = false;
           })
           .catch(err => {
-            console.error("Error setting molecule:", err);
-            setIsInternalUpdate(false);
+            console.error('Failed to load molecule:', err);
+            isLoadingRef.current = false;
           });
-      });
-    }, [currentJob]);
+      }
 
+      // subscription to change in Ketcher editor and update
+      ketcher.editor.subscribe('change', () => {
+        if (isLoadingRef.current) return;
+
+        const { setCurrentSdf, setCurrentSmiles, runPropertiesCalculation } = useDockingStore.getState();
+
+        ketcher.getSmiles().then(smiles => {
+          setCurrentSdf(null);
+          setCurrentSmiles(smiles);
+          runPropertiesCalculation().catch(err => {
+            console.error('Failed to load molecule:', err);
+          });
+        }).catch(console.error);
+      });
+
+      // workaround to prevent scroll jump on ketcher init
+      setTimeout(() => setIsLocked(false), 100);
+    }, []);
+
+    // workaround to prevent scroll jump on ketcher init
+    React.useEffect(() => {
+      scrollPositionRef.current = window.scrollY;
+    }, []);
+
+    // workaround to prevent scroll jump on ketcher init
+    React.useEffect(() => {
+      if (!isLocked) return;
+
+      const preventScroll = (e: Event) => {
+        e.preventDefault();
+        window.scrollTo(0, scrollPositionRef.current);
+      };
+
+      window.addEventListener('scroll', preventScroll, { passive: false });
+
+      return () => {
+        window.removeEventListener('scroll', preventScroll);
+      };
+    }, [isLocked]);
 
     return (
-      <ErrorBoundary>
-          <div className="h-full w-full overflow-hidden rounded-xl border-2">
-              <Editor
+      <>
+          <div className="h-full w-full">
+            <Editor
               staticResourcesUrl={process.env.PUBLIC_URL!}
               structServiceProvider={structServiceProvider}
-              onInit={handleOnInit}
-              errorHandler={message => {
-                  if (process.env.NODE_ENV !== "production") {
-                      throw new Error(message);
-                  }
+
+              errorHandler={(message: string) => {
+                setHasError(true);
+                setErrorMessage(message.toString());
               }}
-          />
+
+              onInit={handleOnInit}
+            />
           </div>
-      </ErrorBoundary>
+          {hasError && (
+            <InfoModal
+              message={errorMessage}
+              close={() => {
+                setHasError(false);
+
+                const cliparea: HTMLElement | null =
+                  document.querySelector('.cliparea');
+                cliparea?.focus();
+              }}
+            />
+          )}
+      </>
     )
 }
 

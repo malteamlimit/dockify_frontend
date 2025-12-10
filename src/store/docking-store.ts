@@ -184,6 +184,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
     })
+    await get().runPropertiesCalculation();
   },
   refreshCurrentJobThumbnail: () => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);

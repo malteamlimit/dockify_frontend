@@ -1,3 +1,5 @@
+import { Ketcher } from "ketcher-core";
+
 export interface Complex {
     violation: string[];
     total_score: number;
@@ -50,3 +52,7 @@ export interface DockingJob {
     thumbnailRefresh?: number,
     job?: DockingJob
 }
+
+  export interface Window {
+    ketcher?: Ketcher;
+  }

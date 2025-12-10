@@ -93,7 +93,7 @@ const ThreeDmolFrame = () => {
           viewerRef.current = $3Dmol.createViewer(containerRef.current,
             {
               defaultcolors: $3Dmol.elementColors.rasmol,
-              backgroundColor: "#efefef",
+              backgroundColor: "#ededed",
             }
           )
           viewerRef.current.zoomTo()

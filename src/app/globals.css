@@ -140,3 +140,13 @@
     -moz-appearance: textfield;
   }
 }
+
+/* Animation for image change */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 300ms ease-in-out;
+}
