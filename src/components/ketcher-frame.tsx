@@ -12,6 +12,7 @@ const structServiceProvider = new StandaloneStructServiceProvider() as StructSer
 
 function KetcherFrame() {
     const ketcherRef = React.useRef<Ketcher | null>(null);
+    // isLoadingRef to prevent triggering change event while loading molecule (happens on switching fast between jobs)
     const isLoadingRef = React.useRef(false);
     const currentLoadingJobIdRef = React.useRef<string | null>(null);
 
