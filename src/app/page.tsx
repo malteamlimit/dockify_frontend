@@ -3,27 +3,17 @@
 import * as React from "react";
 import Image from "next/image";
 
-import {AppSidebar} from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+import { AppSidebar } from "@/components/app-sidebar";
+import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card"
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
-import {ButtonRunDocking} from "@/components/button-run-docking";
 
 
 import { useDockingStore } from "@/store/docking-store";
@@ -51,28 +41,9 @@ export default function Home() {
       }
     >
       <AppSidebar />
-      <SidebarInset className="flex overflow-hidden">
-        <header className="bg-background sticky z-10 top-0 flex flex-row shrink-0 items-center justify-between gap-2 border-b px-4 py-3">
-          <div className="flex flex-row items-center gap-2" ><SidebarTrigger className="-ml-1"/>
-            <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink className={'hover:text-muted-foreground'}>Dockify</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block"/>
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Workspace</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-          <ButtonRunDocking variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"} disabled={!currentJob || currentJob.job_status == "running" || currentJob?.qed < 0.4 || !currentJob.is_sub} />
-        </header>
-        <div className="flex flex-col gap-6 my-4">
+      <SidebarInset className="h-screen overflow-y-auto">
+        <AppHeader />
+        <div className="flex flex-col gap-4 my-4">
           {(currentJob?.qed ?? 1) < 0.4 && currentJob !== null ? (<div className="px-4">
             <Alert variant="destructive">
               <CircleAlert/>
@@ -93,7 +64,7 @@ export default function Home() {
               </AlertDescription>
             </Alert>
           </div>) : ""}
-          <div className="h-[800px] flex px-4 gap-6">
+          <div className="h-[800px] flex px-4 gap-4">
             <div className="w-1/2 relative">
 
               {/* Ketcher */}
@@ -114,7 +85,7 @@ export default function Home() {
                       showMoleculeSVG ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'
                   }`}
               >
-                <Card className="h-full w-full p-0">
+                <Card className="h-full w-full p-0 bg-ketcher-canvas">
                   <Image
                       src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${displayedJobId}.svg`}
                       alt="current molecule"
@@ -128,7 +99,7 @@ export default function Home() {
 
             </div>
             <div className="w-1/2 rounded-xl z-8">
-              <Card className="h-full w-full p-0 bg-[#ededed]">
+              <Card className="h-full w-full p-0 bg-ketcher-canvas">
                 <div className="h-full w-full rounded-xl overflow-hidden">
                   <ThreeDmolFrameClient/>
                 </div>

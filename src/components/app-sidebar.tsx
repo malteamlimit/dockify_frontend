@@ -27,11 +27,11 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton";
 
-import {CreditsDialog} from "@/components/credits-dialog";
+import { CreditsDialog } from "@/components/credits-dialog";
 import ResultPreviewCard from "@/components/result-preview-card";
+import { Button } from "@/components/ui/button";
+import { SettingsPanel } from "@/components/settings-panel";
 import {useDockingStore} from "@/store/docking-store";
-import {Button} from "@/components/ui/button";
-import {SettingsPanel} from "@/components/settings-panel";
 
 const navMain = [
   {
@@ -45,13 +45,18 @@ const navMain = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { jobs, isLoading, setCurrentJobId, createJob } = useDockingStore();
+  const { setCurrentJobId, createJob } = useDockingStore();
+  const jobs = useDockingStore(state => state.jobs);
+  const isLoading = useDockingStore(state => state.isLoading);
+
   const [sortBy, setSortBy] = React.useState<string>("time-desc");
   const [activeItem, setActiveItem] = React.useState(navMain[0]);
+  const lastJobCountRef = React.useRef(jobs.length);
+
   const [creditsDialogOpen, setCreditsDialogOpen] = React.useState(false);
   const { setSidebarOpen } = useSidebar();
 
-
+  // Calculate highest and lowest delta G values among jobs for color labels
   const { highest, lowest } = React.useMemo(() => {
     const validJobs = jobs.filter(job =>
       job.complexes && job.best_complex_nr != null
@@ -61,13 +66,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return { highest, lowest }
   }, [jobs]);
 
+  // Auto-scroll to the latest job when a new job is added
+  React.useEffect(() => {
+    if (jobs.length > lastJobCountRef.current) {
+      const latestJobId = useDockingStore.getState().currentJobId;
+      setTimeout(() => {
+        if (latestJobId) {
+          const element = document.querySelector(`[data-job-id="${latestJobId}"]`);
+          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+    lastJobCountRef.current = jobs.length;
+  }, [jobs.length]);
+
   return (
     <Sidebar
       collapsible="icon"
       className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
       {...props}
     >
-      {/* This is the first sidebar */}
+      {/* General Sidebar (Workspace, Settings, Credits, ...) */}
       <Sidebar
         collapsible="none"
         className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
@@ -135,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarFooter>
       </Sidebar>
-      {/* This is the second sidebar */}
+      {/* Job Sidebar (which is collapsable) */}
       <Sidebar collapsible="none" className="hidden flex-1 md:flex">
         <SidebarHeader className="gap-3.5 border-b p-3 justify-center">
           <div className="flex w-full items-center justify-between">
@@ -205,6 +224,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           .map((job, idx) => (
                               <div
                                   key={job.job_id || idx}
+                                  data-job-id={job.job_id || idx}
                                   className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
                                   onClick={() => setCurrentJobId(job.job_id)}
                               >

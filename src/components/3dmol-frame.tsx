@@ -90,10 +90,12 @@ const ThreeDmolFrame = () => {
     useEffect(() => {
       if (containerRef.current && !viewerRef.current) {
         try {
+          const bg = getComputedStyle(document.documentElement)
+              .getPropertyValue('--ketcher-canvas');
           viewerRef.current = $3Dmol.createViewer(containerRef.current,
             {
               defaultcolors: $3Dmol.elementColors.rasmol,
-              backgroundColor: "#ededed",
+              backgroundColor: bg,
             }
           )
           viewerRef.current.zoomTo()

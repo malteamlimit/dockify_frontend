@@ -11,11 +11,6 @@ import { useDockingStore } from "@/store/docking-store";
 const structServiceProvider = new StandaloneStructServiceProvider() as StructServiceProvider;
 
 function KetcherFrame() {
-    React.useEffect(() => {
-      console.log('KetcherFrame mounted');
-      return () => console.log('KetcherFrame unmounted');
-    }, []);
-
     const ketcherRef = React.useRef<Ketcher | null>(null);
     const isLoadingRef = React.useRef(false);
     const currentLoadingJobIdRef = React.useRef<string | null>(null);
@@ -32,7 +27,9 @@ function KetcherFrame() {
       if (!ketcherRef.current || !currentJobId) return;
 
       const smiles = useDockingStore.getState().getCurrentJob()?.smiles;
+      const status = useDockingStore.getState().getCurrentJob()?.job_status;
       if (!smiles) return;
+      if (status !== 'draft') return;
 
       isLoadingRef.current = true;
       currentLoadingJobIdRef.current = currentJobId;
