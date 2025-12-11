@@ -5,8 +5,10 @@ import { Editor, InfoModal } from "ketcher-react";
 import { StandaloneStructServiceProvider } from "ketcher-standalone";
 import * as React from "react";
 
-import 'ketcher-react/dist/index.css';
 import { useDockingStore } from "@/store/docking-store";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import 'ketcher-react/dist/index.css';
 
 const structServiceProvider = new StandaloneStructServiceProvider() as StructServiceProvider;
 
@@ -22,6 +24,8 @@ function KetcherFrame() {
     const scrollPositionRef = React.useRef(0);
 
     const currentJobId = useDockingStore((state) => state.currentJobId);
+    const currentJobQED = useDockingStore((state) => state.getCurrentJob()?.qed);
+    const currentJobIsSub = useDockingStore((state) => state.getCurrentJob()?.is_sub);
 
     // loading molecule when currentJobId changes
     React.useEffect(() => {
@@ -87,6 +91,62 @@ function KetcherFrame() {
       setTimeout(() => setIsLocked(false), 100);
     }, []);
 
+    // custom hook for showing warning/error toasts based on a condition like qed or is_sub
+    // TODO: outsource condition checking, fetch them from settings, use the same conditions for app-header.tsx / button-run-docking.tsx
+    function usePersistentToast(
+      condition: boolean,
+      header: string,
+      description: string,
+      type: 'warning' | 'error' = 'warning'
+    ) {
+      const toastIdRef = React.useRef<string | number | null>(null);
+      const optionsRef = React.useRef({ header, description, type });
+
+      optionsRef.current = { header, description, type };
+
+      React.useEffect(() => {
+        const { header, description, type } = optionsRef.current;
+
+        if (condition) {
+          if (!toastIdRef.current) {
+            toastIdRef.current = toast[type](header, {
+              description,
+              duration: Infinity,
+              toasterId: 'ketcher'
+            });
+          }
+        } else {
+          if (toastIdRef.current) {
+            toast.dismiss(toastIdRef.current);
+            toastIdRef.current = null;
+          }
+        }
+      }, [condition]);
+
+      React.useEffect(() => {
+        return () => {
+          if (toastIdRef.current) {
+            toast.dismiss(toastIdRef.current);
+            toastIdRef.current = null;
+          }
+        };
+      }, []);
+    }
+
+    usePersistentToast(
+      !!currentJobQED && currentJobQED < 0.4,
+      'Warning: QED < 0.4',
+      'The current molecule has a low drug-likeness. Consider optimizing it further.',
+      'warning'
+    );
+
+    usePersistentToast(
+      currentJobIsSub === false,
+      'Error: Required Substructure Missing',
+      'Please add the required substructure to the molecule before proceeding.',
+      'error'
+    );
+
     // workaround to prevent scroll jump on ketcher init
     React.useEffect(() => {
       scrollPositionRef.current = window.scrollY;
@@ -109,7 +169,10 @@ function KetcherFrame() {
     }, [isLocked]);
 
     return (
-      <>
+      <div className="relative h-full w-full">
+          <div className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 w-3/5">
+            <Toaster id="ketcher" position="bottom-center" theme="light" richColors />
+          </div>
           <div className="h-full w-full">
             <Editor
               staticResourcesUrl={process.env.PUBLIC_URL!}
@@ -135,7 +198,7 @@ function KetcherFrame() {
               }}
             />
           )}
-      </>
+      </div>
     )
 }
 

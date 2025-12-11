@@ -10,14 +10,12 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
 
 
 import { useDockingStore } from "@/store/docking-store";
-import {CircleAlert} from "lucide-react";
 
 
 export default function Home() {
@@ -44,26 +42,6 @@ export default function Home() {
       <SidebarInset className="h-screen overflow-y-auto">
         <AppHeader />
         <div className="flex flex-col gap-4 my-4">
-          {(currentJob?.qed ?? 1) < 0.4 && currentJob !== null ? (<div className="px-4">
-            <Alert variant="destructive">
-              <CircleAlert/>
-              <AlertTitle>Heads up!</AlertTitle>
-              <AlertDescription>
-                Your QED is below 0.4, which means the molecule is likely not very drug-like. Please optimize it further
-                before docking.
-              </AlertDescription>
-            </Alert>
-          </div>) : ""}
-          {(!currentJob?.is_sub) ? (<div className="px-4">
-            <Alert variant="destructive">
-              <CircleAlert/>
-              <AlertTitle>Heads up!</AlertTitle>
-              <AlertDescription>
-                The requiered substructure is not present in the current structure. Please add it to the structure
-                before docking.
-              </AlertDescription>
-            </Alert>
-          </div>) : ""}
           <div className="h-[800px] flex px-4 gap-4">
             <div className="w-1/2 relative">
 
