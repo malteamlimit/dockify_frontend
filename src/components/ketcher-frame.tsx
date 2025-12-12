@@ -1,7 +1,7 @@
 'use client'
 
-import {Ketcher, StructServiceProvider} from "ketcher-core";
-import { Editor, InfoModal } from "ketcher-react";
+import { Ketcher, StructServiceProvider } from "ketcher-core";
+import { Editor, InfoModal, ButtonsConfig } from "ketcher-react";
 import { StandaloneStructServiceProvider } from "ketcher-standalone";
 import * as React from "react";
 
@@ -21,7 +21,10 @@ function KetcherFrame() {
     const [hasError, setHasError] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
     const [isLocked, setIsLocked] = React.useState(true);
+    // workaround to prevent scroll jump on ketcher init
     const scrollPositionRef = React.useRef(0);
+    // makes ketcher mouse and scroll navigation work
+    const editorContainerRef = React.useRef<HTMLDivElement>(null);
 
     const currentJobId = useDockingStore((state) => state.currentJobId);
     const currentJobQED = useDockingStore((state) => state.getCurrentJob()?.qed);
@@ -73,19 +76,24 @@ function KetcherFrame() {
       }
 
       // subscription to change in Ketcher editor and update
-      ketcher.editor.subscribe('change', () => {
-        if (isLoadingRef.current) return;
+      try {
+        if (ketcher.editor && typeof ketcher.editor.subscribe === 'function') {
+          ketcher.editor.subscribe('change', () => {
+            if (isLoadingRef.current) return;
 
-        const { setCurrentSdf, setCurrentSmiles, runPropertiesCalculation } = useDockingStore.getState();
+            const { setCurrentSdf, setCurrentSmiles, runPropertiesCalculation } = useDockingStore.getState();
 
-        ketcher.getSmiles().then(smiles => {
-          setCurrentSdf(null);
-          setCurrentSmiles(smiles);
-          runPropertiesCalculation().catch(err => {
-            console.error('Failed to load molecule:', err);
+            ketcher.getSmiles().then(smiles => {
+              setCurrentSdf(null);
+              setCurrentSmiles(smiles);
+              runPropertiesCalculation().catch(console.error);
+            }).catch(console.error);
           });
-        }).catch(console.error);
-      });
+        }
+      } catch (err) {
+        // expect error because of editor's disableMacromoleculesEditor keyword
+        console.warn('Could not subscribe to editor changes:', err);
+      }
 
       // workaround to prevent scroll jump on ketcher init
       setTimeout(() => setIsLocked(false), 100);
@@ -168,22 +176,63 @@ function KetcherFrame() {
       };
     }, [isLocked]);
 
+    // makes ketcher mouse and scroll navigation work
+    React.useEffect(() => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+
+      const handleWheel = (e: WheelEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }, []);
+
     return (
       <div className="relative h-full w-full">
-          <div className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 w-3/5">
+          <div className="absolute bottom-18 left-1/2 -translate-x-1/2 z-1 w-3/5">
             <Toaster id="ketcher" position="bottom-center" theme="light" richColors />
           </div>
-          <div className="h-full w-full">
+          <div
+              className="h-full w-full"
+              ref={editorContainerRef}
+          >
             <Editor
               staticResourcesUrl={process.env.PUBLIC_URL!}
               structServiceProvider={structServiceProvider}
-
               errorHandler={(message: string) => {
                 setHasError(true);
                 setErrorMessage(message.toString());
               }}
-
               onInit={handleOnInit}
+              disableMacromoleculesEditor
+              buttons={{
+                  "arom": { hidden: true },
+                  "dearom": { hidden: true },
+                  "cip": { hidden: true },
+                  "check": { hidden: true },
+                  "analyse": { hidden: true },
+                  "recognize": { hidden: true },
+                  "explicit-hydrogens": { hidden: true },
+                  "miew": { hidden: true },
+
+                  "sgroup": { hidden: true },
+                  "rgroup": { hidden: true },
+                  "arrows": { hidden: true },
+                  "reaction-plus": { hidden: true },
+                  "reaction-mapping-tools": { hidden: true },
+                  "enhanced-stereo": { hidden: true },
+                  // "create-monomer": { hidden: true },
+                  "text": { hidden: true },
+                  "shape-line": { hidden: true },
+                  "shape-ellipse": { hidden: true },
+                  "shape-rectangle": { hidden: true },
+                  "images": { hidden: true },
+              } as ButtonsConfig}
             />
           </div>
           {hasError && (
