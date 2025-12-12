@@ -57,7 +57,7 @@ export default function Home() {
               </div>
 
               {/* Image */}
-              <div
+              {displayedJobId !== undefined && <div
                   key={displayedJobId}
                   className={`absolute inset-0 transition-opacity duration-300 ${
                       showMoleculeSVG ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'
@@ -73,7 +73,7 @@ export default function Home() {
                       className="w-full h-full object-contain"
                   />
                 </Card>
-              </div>
+              </div>}
 
             </div>
             <div className="w-1/2 rounded-xl z-8">
