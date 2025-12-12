@@ -23,7 +23,7 @@ function KetcherFrame() {
     const [isLocked, setIsLocked] = React.useState(true);
     // workaround to prevent scroll jump on ketcher init
     const scrollPositionRef = React.useRef(0);
-    // makes ketcher mouse and scroll navigation work
+    // fix: makes ketcher mouse and scroll navigation work
     const editorContainerRef = React.useRef<HTMLDivElement>(null);
 
     const currentJobId = useDockingStore((state) => state.currentJobId);
@@ -176,7 +176,7 @@ function KetcherFrame() {
       };
     }, [isLocked]);
 
-    // makes ketcher mouse and scroll navigation work
+    // fix: makes ketcher mouse and scroll navigation work
     React.useEffect(() => {
       const container = editorContainerRef.current;
       if (!container) return;
@@ -190,6 +190,20 @@ function KetcherFrame() {
       return () => {
         container.removeEventListener('wheel', handleWheel);
       };
+    }, []);
+
+    React.useEffect(() => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Meta' || e.key === 'Control') {
+          e.stopPropagation();
+        }
+      };
+
+      container.addEventListener('keydown', handleKeyDown, true);
+      return () => container.removeEventListener('keydown', handleKeyDown, true);
     }, []);
 
     return (
