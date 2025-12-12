@@ -34,6 +34,7 @@ export function AppHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
+      {process.env.NODE_ENV === 'development' && <p>{currentJob?.job_id}</p>}
       <ButtonRunDocking variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"} disabled={!currentJob || currentJob.job_status == "running" || currentJob?.qed < 0.4 || !currentJob.is_sub} />
     </header>
   )
