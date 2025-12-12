@@ -121,7 +121,7 @@ export function SettingsPanel() {
                 <FieldDescription>Changing this allows you to dock structures with lower QED scores.</FieldDescription>
               </FieldContent>
               <ButtonGroup>
-                <InputGroup>
+                <InputGroup className="bg-background">
                   <InputGroupAddon>
                     <InputGroupText>min.</InputGroupText>
                   </InputGroupAddon>
@@ -177,7 +177,7 @@ export function SettingsPanel() {
                   as violations.</FieldDescription>
               </FieldContent>
               <ButtonGroup>
-                <InputGroup>
+                <InputGroup className="bg-background">
                   <InputGroupAddon>
                     <InputGroupText>max.</InputGroupText>
                   </InputGroupAddon>
@@ -220,7 +220,7 @@ export function SettingsPanel() {
                   constraints.</FieldDescription>
               </FieldContent>
               <ButtonGroup>
-                <InputGroup>
+                <InputGroup className="bg-background">
                   <InputGroupAddon>
                     <InputGroupText>max.</InputGroupText>
                   </InputGroupAddon>
