@@ -82,7 +82,8 @@ export async function generateConf(smiles: string, job_id: string) {
     body: JSON.stringify({ smiles: smiles, job_id: job_id })
   });
   if (!res.ok) throw new Error(`Failed to generate Conformer for SMILES: ${smiles}`);
-  return res.json(); // message
+  const data = await res.json();
+  return data.sdf; // sdf
 }
 
 

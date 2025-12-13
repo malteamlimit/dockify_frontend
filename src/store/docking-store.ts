@@ -24,6 +24,7 @@ interface DockingState {
   setCurrentJobId: (job_id: string) => void;
   setCurrentSmiles: (smiles: string) => void;
   setCurrentSdf: (object: {sdf: string} | null) => void;
+  updateStructure: (smiles: string, sdf: string) => void;
   setCurrentStatus: (job_status: "draft" | "running" | "completed" | "failed") => void;
   setCurrentProps: (props: {
     weight: number;
@@ -67,6 +68,16 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs[jobIndex].sdf = object?.sdf ?? null;
     }
   }),
+  updateStructure: (smiles: string, sdf: string) => {
+    set((state) => {
+      const job = state.jobs.find(j => j.job_id === state.currentJobId);
+      if (job) {
+        job.smiles = smiles;
+        job.sdf = sdf;
+      }
+    });
+    get().runPropertiesCalculation().catch(console.error);
+  },
   setCurrentName: (name) => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
     if (jobIndex >= 0) {
@@ -155,9 +166,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       set({jobs, isLoading: false});
 
       set((state) => {
-        if (jobs.length === 0) {
-          state.createJob()
-        } else if (state.currentJobId == null) {
+        if (state.currentJobId == null) {
           state.currentJobId = jobs[jobs.length - 1].job_id;
           console.log('Set current job id:', state.currentJobId);
         }
@@ -175,6 +184,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
     })
+    await get().runPropertiesCalculation();
   },
   createCopy: async (job_id: string) => {
     const job = getCopy(get().jobs.find(job => job.job_id === job_id) || getDefaultJob())

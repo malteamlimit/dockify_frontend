@@ -10,6 +10,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import 'ketcher-react/dist/index.css';
+import { generateConf } from "@/lib/api";
 
 const structServiceProvider = new StandaloneStructServiceProvider() as StructServiceProvider;
 
@@ -26,6 +27,8 @@ function KetcherFrame() {
     const scrollPositionRef = React.useRef(0);
     // fix: makes ketcher mouse and scroll navigation work
     const editorContainerRef = React.useRef<HTMLDivElement>(null);
+
+    const subscribedKetcherRef = React.useRef<Ketcher | null>(null);
 
     const currentJobId = useDockingStore((state) => state.currentJobId);
     const currentJobQED = useDockingStore((state) => state.getCurrentJob()?.qed);
@@ -80,18 +83,21 @@ function KetcherFrame() {
 
       // subscription to change in Ketcher editor and update
       try {
-        if (ketcher.editor && typeof ketcher.editor.subscribe === 'function') {
-          ketcher.editor.subscribe('change', () => {
+        if (ketcher.editor?.subscribe && subscribedKetcherRef.current !== ketcher) {
+          const handler = () => {
             if (isLoadingRef.current) return;
 
-            const { setCurrentSdf, setCurrentSmiles, runPropertiesCalculation } = useDockingStore.getState();
+            const { updateStructure } = useDockingStore.getState();
+            const currentJobId = useDockingStore.getState().currentJobId;
 
-            ketcher.getSmiles().then(smiles => {
-              setCurrentSdf(null);
-              setCurrentSmiles(smiles);
-              runPropertiesCalculation().catch(console.error);
-            }).catch(console.error);
-          });
+            ketcher.getSmiles().then(async smiles => {
+                const conformer = await generateConf(smiles, currentJobId!);
+                updateStructure(smiles, conformer);
+              }).catch(console.error);
+          };
+
+          subscribedKetcherRef.current = ketcher;
+          ketcher.editor.subscribe('change', handler);
         }
       } catch (err) {
         // expect error because of editor's disableMacromoleculesEditor keyword
