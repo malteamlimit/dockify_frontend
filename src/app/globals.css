@@ -43,6 +43,9 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --color-ketcher-canvas: var(--ketcher-canvas);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
 }
 
 :root {
@@ -80,6 +83,9 @@
   --foreground: oklch(0.129 0.042 264.695);
 
   --ketcher-canvas: #fcfcfc;
+  --warning-bg: hsl(49, 100%, 97%);
+  --warning-border: hsl(49, 91%, 84%);
+  --warning-text: hsl(31, 92%, 45%);
 }
 
 .dark {

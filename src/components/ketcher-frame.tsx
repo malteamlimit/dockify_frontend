@@ -6,6 +6,7 @@ import { StandaloneStructServiceProvider } from "ketcher-standalone";
 import * as React from "react";
 
 import { useDockingStore } from "@/store/docking-store";
+import { useSettingsStore } from "@/store/settings-store";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import 'ketcher-react/dist/index.css';
@@ -29,6 +30,8 @@ function KetcherFrame() {
     const currentJobId = useDockingStore((state) => state.currentJobId);
     const currentJobQED = useDockingStore((state) => state.getCurrentJob()?.qed);
     const currentJobIsSub = useDockingStore((state) => state.getCurrentJob()?.is_sub);
+    const qedThreshold = useSettingsStore((state) => state.qedThreshold);
+    const enforceSub = useSettingsStore((state) => state.enforceSubstructure);
 
     // loading molecule when currentJobId changes
     React.useEffect(() => {
@@ -107,12 +110,21 @@ function KetcherFrame() {
       description: string,
       type: 'warning' | 'error' = 'warning'
     ) {
+      const currentJobStatus = useDockingStore((state) => state.getCurrentJob()?.job_status);
+
       const toastIdRef = React.useRef<string | number | null>(null);
       const optionsRef = React.useRef({ header, description, type });
-
       optionsRef.current = { header, description, type };
 
       React.useEffect(() => {
+        if (currentJobStatus !== 'draft') {
+          if (toastIdRef.current) {
+            toast.dismiss(toastIdRef.current);
+            toastIdRef.current = null;
+          }
+          return;
+        }
+
         const { header, description, type } = optionsRef.current;
 
         if (condition) {
@@ -129,7 +141,7 @@ function KetcherFrame() {
             toastIdRef.current = null;
           }
         }
-      }, [condition]);
+      }, [condition, currentJobStatus]);
 
       React.useEffect(() => {
         return () => {
@@ -142,14 +154,14 @@ function KetcherFrame() {
     }
 
     usePersistentToast(
-      !!currentJobQED && currentJobQED < 0.4,
-      'Warning: QED < 0.4',
+      !!currentJobQED && currentJobQED < qedThreshold,
+      `Warning: QED < ${qedThreshold}`,
       'The current molecule has a low drug-likeness. Consider optimizing it further.',
       'warning'
     );
 
     usePersistentToast(
-      currentJobIsSub === false,
+      currentJobIsSub === false && enforceSub,
       'Error: Required Substructure Missing',
       'Please add the required substructure to the molecule before proceeding.',
       'error'

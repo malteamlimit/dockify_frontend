@@ -10,10 +10,13 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ButtonRunDocking } from "@/components/button-run-docking";
 
-import {useDockingStore} from "@/store/docking-store";
+import { useDockingStore } from "@/store/docking-store";
+import { useSettingsStore } from "@/store/settings-store";
 
 export function AppHeader() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
+  const qedThreshold = useSettingsStore((state) => state.qedThreshold);
+  const enforceSubstructure = useSettingsStore((state) => state.enforceSubstructure);
 
   return (
     <header className="bg-background sticky z-10 top-0 flex flex-row shrink-0 items-center justify-between gap-2 border-b px-4 py-3">
@@ -34,8 +37,16 @@ export function AppHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      {process.env.NODE_ENV === 'development' && <p>{currentJob?.job_id}</p>}
-      <ButtonRunDocking variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"} disabled={!currentJob || currentJob.job_status == "running" || currentJob?.qed < 0.4 || !currentJob.is_sub} />
+      {process.env.NODE_ENV === 'development' && <p>{currentJob?.job_id}, {currentJob?.job_status}, {currentJob?.qed}, {currentJob?.is_sub.toString()}</p>}
+      <ButtonRunDocking
+          variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"}
+          disabled={
+              !currentJob ||
+              currentJob.job_status == "running" ||
+              currentJob?.qed < qedThreshold ||
+              (!currentJob.is_sub && enforceSubstructure)
+          }
+      />
     </header>
   )
 }

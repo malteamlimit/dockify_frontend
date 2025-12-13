@@ -3,16 +3,9 @@ import * as React from "react"
 import {exportDatabase, importDatabase, resetDatabase} from "@/lib/api";
 import {downloadBlob} from "@/lib/utils";
 import {useDockingStore} from "@/store/docking-store";
+import {useSettingsStore} from "@/store/settings-store";
 
 import {toast} from "sonner";
-
-import {
-  Plus,
-  Minus,
-  Trash2,
-  HardDriveDownload,
-  HardDriveUpload
-} from "lucide-react"
 import {Button, buttonVariants} from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -41,7 +34,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-
+import {
+  Plus,
+  Minus,
+  Trash2,
+  HardDriveDownload,
+  HardDriveUpload
+} from "lucide-react"
 
 export function SettingsPanel() {
   const [isExporting, setIsExporting] = React.useState(false)
@@ -51,6 +50,21 @@ export function SettingsPanel() {
 
   const [isResetOpen, setIsResetOpen] = React.useState(false)
 
+  const qedThreshold = useSettingsStore((state) => state.qedThreshold);
+  const enforceSubstructure = useSettingsStore((state) => state.enforceSubstructure);
+  const { setQedThreshold, setEnforceSubstructure } = useSettingsStore()
+
+  const incrementQed = () => {
+    const newValue = Math.min(1, qedThreshold + 0.05);
+    setQedThreshold(Number(newValue.toFixed(2)));
+  };
+
+  const decrementQed = () => {
+    const newValue = Math.max(0, qedThreshold - 0.05);
+    setQedThreshold(Number(newValue.toFixed(2)));
+  };
+
+  // handle db export for backup purposes
   const handleExport = () => {
     setIsExporting(true)
     exportDatabase().then((value) => {
@@ -62,10 +76,12 @@ export function SettingsPanel() {
         .finally(() => setIsExporting(false))
   }
 
+  // handle db import for backup purposes
   const handleImport = () => {
     fileInputRef.current?.click()
   }
 
+  // handle file change event for db import
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -92,6 +108,7 @@ export function SettingsPanel() {
         .finally(() => setIsImporting(false))
   }
 
+  // handle resetting the database
   const handleReset = () => {
     resetDatabase()
         .then(() => {
@@ -132,7 +149,8 @@ export function SettingsPanel() {
                       step={0.05}
                       min={0}
                       max={1}
-                      defaultValue={0.4}
+                      value={qedThreshold}
+                      onChange={(e) => setQedThreshold(Number(e.target.value))}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
@@ -142,6 +160,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={decrementQed}
                     aria-label="Decrement"
                 >
                   <Minus/>
@@ -151,6 +170,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={incrementQed}
                     aria-label="Increment"
                 >
                   <Plus/>
@@ -165,7 +185,11 @@ export function SettingsPanel() {
                   Toggle to enforce the presence of the required substructure in the docked molecules.
                 </FieldDescription>
               </FieldContent>
-              <Switch id="substructure" defaultChecked/>
+              <Switch
+                  id="substructure"
+                  checked={enforceSubstructure}
+                  onCheckedChange={setEnforceSubstructure}
+              />
             </Field>
           </FieldGroup>
           <FieldGroup className={'pt-8'}>
