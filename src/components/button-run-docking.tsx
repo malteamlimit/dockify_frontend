@@ -12,12 +12,13 @@ import {
     ToggleGroup,
     ToggleGroupItem
 } from "@/components/ui/toggle-group"
-import {ChevronDown, RotateCw} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronDown, RotateCw } from "lucide-react";
 
-import {toast} from "sonner";
-import {useDockingStore} from "@/store/docking-store";
+import { toast } from "sonner";
+import { useDockingStore } from "@/store/docking-store";
 
-export function ButtonRunDocking({variant = "new", disabled = false}: { variant?: "new" | "rerun", disabled?: boolean }) {
+export function ButtonRunDocking({variant = "new", disableReason}: { variant?: "new" | "rerun", disableReason: string }) {
     const state = useDockingStore();
     const [name, setName] = React.useState("")
     const [runs, setRuns] = React.useState<string | null>(null)
@@ -59,14 +60,20 @@ export function ButtonRunDocking({variant = "new", disabled = false}: { variant?
       }
     }, [job.name, open])
 
-
     return (
         <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button disabled={disabled}>
-                {variant === "new" ? "Start new Docking" : "Extend with more Runs"} <ChevronDown/>
-            </Button>
-          </PopoverTrigger>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button disabled={!!disableReason} className={"!pointer-events-auto disabled:hover:bg-primary"}>
+                    {variant === "new" ? "Start new Docking" : "Extend with more Runs"} <ChevronDown/>
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent hidden={!disableReason} collisionPadding={10}>
+              <p dangerouslySetInnerHTML={{ __html: disableReason || "Run docking job" }} className="text-center text-sm text-red-200" />
+            </TooltipContent>
+          </Tooltip>
           <PopoverContent className="w-80 me-4">
             <div className="grid gap-4">
               <div className="space-y-2">

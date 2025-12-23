@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,6 +19,25 @@ export function AppHeader() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
   const qedThreshold = useSettingsStore((state) => state.qedThreshold);
   const enforceSubstructure = useSettingsStore((state) => state.enforceSubstructure);
+
+  const disableReason = React.useMemo(() => {
+    const reasons: string[] = [];
+
+    if (!currentJob) {
+        reasons.push("No job loaded");
+    }
+    if (currentJob?.job_status == "running") {
+        reasons.push("Docking job is currently running");
+    }
+    if (currentJob?.qed && currentJob.qed < qedThreshold) {
+        reasons.push(`Molecule QED (${currentJob.qed.toFixed(2)}) is below the threshold (${qedThreshold})`);
+    }
+    if (!currentJob?.is_sub && enforceSubstructure) {
+        reasons.push("Molecule does not contain the required substructure");
+    }
+
+    return reasons.join("<br/>");
+}, [currentJob, qedThreshold, enforceSubstructure]);
 
   return (
     <header className="bg-background sticky z-10 top-0 flex flex-row shrink-0 items-center justify-between gap-2 border-b px-4 py-3">
@@ -39,13 +60,8 @@ export function AppHeader() {
       </div>
       {process.env.NODE_ENV === 'development' && <p>{currentJob?.job_id}, {currentJob?.job_status}, {currentJob?.qed}, {currentJob?.is_sub.toString()}</p>}
       <ButtonRunDocking
-          variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"}
-          disabled={
-              !currentJob ||
-              currentJob.job_status == "running" ||
-              currentJob?.qed < qedThreshold ||
-              (!currentJob.is_sub && enforceSubstructure)
-          }
+        variant={(currentJob?.runs ?? 0) == 0 ? "new" : "rerun"}
+        disableReason={disableReason}
       />
     </header>
   )
