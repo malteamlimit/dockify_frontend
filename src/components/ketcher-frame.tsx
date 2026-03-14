@@ -258,7 +258,7 @@ function KetcherFrame() {
                   "reaction-plus": { hidden: true },
                   "reaction-mapping-tools": { hidden: true },
                   "enhanced-stereo": { hidden: true },
-                  // "create-monomer": { hidden: true },
+                  "create-monomer": { hidden: true },
                   "text": { hidden: true },
                   "shape-line": { hidden: true },
                   "shape-ellipse": { hidden: true },
