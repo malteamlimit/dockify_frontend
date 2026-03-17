@@ -94,7 +94,7 @@ const ThreeDmolFrame = () => {
   return (
     <div className="w-full h-full relative">
       <div className="absolute top-2 right-2 z-5 flex items-center gap-2">
-        <div className="text-sm p-1.5 px-2.5 bg-white rounded-md shadow">
+        <div className="text-sm font-medium p-1.5 px-2.5 bg-white rounded-md shadow">
           Current Model: {currentModel}
         </div>
         <Button variant="outline" className="size-8 cursor-pointer border-none shadow" onClick={toggleSpin}>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
@@ -14,12 +15,13 @@ import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
 
-
 import { useDockingStore } from "@/store/docking-store";
-
+import {Copy} from "lucide-react";
+import {toast} from "sonner";
 
 export default function Home() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
+  const createCopy = useDockingStore((state) => state.createCopy);
   const showMoleculeSVG = (currentJob?.job_status == "completed" || currentJob?.job_status == "running");
 
   const [displayedJobId, setDisplayedJobId] = React.useState(currentJob?.job_id);
@@ -29,6 +31,10 @@ export default function Home() {
       setDisplayedJobId(currentJob.job_id);
     }
   }, [currentJob?.job_id, showMoleculeSVG]);
+
+  const handleCopy = (jobId: string) => {
+    createCopy(jobId).catch(() => toast.error("There was an error. Please try again later. :("))
+  };
 
   return (
     <SidebarProvider
@@ -63,7 +69,16 @@ export default function Home() {
                       showMoleculeSVG ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'
                   }`}
               >
-                <Card className="h-full w-full p-0 bg-ketcher-canvas">
+                <Card className="h-full w-full p-0 bg-ketcher-canvas relative overflow-hidden">
+                  <div className="absolute top-2 right-2 z-5 flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-8 cursor-pointer border-none shadow"
+                      onClick={() => handleCopy(displayedJobId)}
+                    >
+                      <Copy /> Copy into new design
+                    </Button>
+                  </div>
                   <Image
                       src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${displayedJobId}.svg`}
                       alt="current molecule"
