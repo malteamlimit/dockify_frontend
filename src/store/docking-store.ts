@@ -259,7 +259,7 @@ export function getDefaultJob(): DockingJob {
     runs: 0,
 
     // ---- Docking Results ----
-    best_complex_nr: 0,
+    best_complex_nr: null,
     complexes: [],
 
     // ---- Status & Error Handling ----
