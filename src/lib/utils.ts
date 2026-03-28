@@ -1,6 +1,6 @@
 import {clsx, type ClassValue} from "clsx"
 import {twMerge} from "tailwind-merge"
-import {DockingJob} from "@/app/models";
+import {Complex, DockingJob} from "@/app/models";
 import {toast} from "sonner";
 
 
@@ -161,3 +161,61 @@ export function downloadBlob(blob: Blob, downloadName: string) {
   document.body.removeChild(link);
   URL.revokeObjectURL(link.href);
 }
+
+// ---------------------- Validation ----------------------
+/**
+ * Checks if a complex has a Delta G violation.
+ *
+ * @param complex - The complex to validate
+ * @param threshold - The maximum Delta G value. Values >= threshold are violations
+ * @returns true if Delta G >= threshold (violation), false otherwise
+ * @example
+ * // With threshold = -1, delta_g = 0 is a violation, delta_g = -2 is not
+ * validateDeltaG(complex, -1); // true if complex.delta_g >= -1
+ */
+export function validateDeltaG(complex: Complex, threshold: number): boolean {
+  return complex.delta_g >= threshold;
+}
+
+/**
+ * Checks if a complex has an Atom Pair CST violation.
+ *
+ * @param complex - The complex to validate
+ * @param threshold - The maximum Atom Pair CST value. Values >= threshold are violations
+ * @returns true if Atom Pair CST >= threshold (violation), false otherwise
+ * @example
+ * validateAtomPairCst(complex, 0); // true if complex.atom_pair_cst >= 0
+ */
+export function validateAtomPairCst(complex: Complex, threshold: number): boolean {
+  return complex.atom_pair_cst >= threshold;
+}
+
+/**
+ * Validates a complex based on the specified thresholds and returns the names of violated constraints.
+ *
+ * @param complex - The complex to validate
+ * @param deltaGThreshold - The maximum Delta G value (e.g., -1). Values >= threshold are violations
+ * @param atomPairCstThreshold - The maximum Atom Pair CST value. Values >= threshold are violations
+ * @returns Array with names of violated constraints (e.g., ["DELTA_G", "ATOM_PAIR_CST"])
+ * @example
+ * // With deltaGThreshold = -1, delta_g = 0 is a violation, delta_g = -2 is not
+ * validateComplexViolations(complex, -1, 0);
+ */
+export function validateComplexViolations(
+  complex: Complex,
+  deltaGThreshold: number,
+  atomPairCstThreshold: number
+): string[] {
+  const violations: string[] = [];
+
+  if (validateDeltaG(complex, deltaGThreshold)) {
+    violations.push("DELTA_G");
+  }
+
+  if (validateAtomPairCst(complex, atomPairCstThreshold)) {
+    violations.push("ATOM_PAIR_CST");
+  }
+
+  return violations;
+}
+

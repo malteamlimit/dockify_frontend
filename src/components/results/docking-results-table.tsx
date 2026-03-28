@@ -16,7 +16,39 @@ interface ComplexWithIndex extends Complex {
   index: number;
 }
 
-export function DockingResultsTable({ job }: { job: DockingJob }) {
+interface ViolationCellProps {
+  value: number;
+  constraintName: string;
+  violations?: string[];
+}
+
+function ViolationCell({ value, constraintName, violations }: ViolationCellProps) {
+  const hasViolation = violations?.includes(constraintName);
+
+  if (!hasViolation) {
+    return <span>{value.toFixed(4)}</span>;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="flex items-center text-sm/0 bg-red-100 rounded-md pl-2">
+          {value.toFixed(4)}
+          <div className="flex items-center justify-center bg-red-100 text-red-800 text-xs font-medium w-6 h-6 rounded-full">
+            <OctagonAlert size={14} />
+          </div>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="text-sm flex flex-col items-center align-middle gap-1">
+          <div className="text-red-300">{translate(constraintName)}</div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { job: DockingJob, highlightedComplexIndices?: number[] }) {
   const complexList = job.complexes ?? [];
   const bestComplexId = job.best_complex_nr;
   const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
