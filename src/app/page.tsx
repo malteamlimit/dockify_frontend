@@ -80,7 +80,7 @@ export default function Home() {
                     </Button>
                   </div>
                   <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${displayedJobId}.svg`}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}/static/previews/${displayedJobId}.svg?v=0`}
                       alt="current molecule"
                       width="1000"
                       height="1000"
