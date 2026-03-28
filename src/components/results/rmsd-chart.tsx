@@ -76,7 +76,7 @@ export function RmsdChart({ chartData }: { chartData: Complex[] }) {
 
     const RenderDot: FC<DotProps> = ({ cx, cy, fill, r }) => {
       return (
-        <Dot cx={cx} cy={cy} fill={fill} r={r} />
+        <Dot cx={cx} cy={cy} fill={fill} fillOpacity={0.8} r={r} />
       )
     }
 
@@ -113,6 +113,8 @@ export function RmsdChart({ chartData }: { chartData: Complex[] }) {
                         dataKey="delta_g"
                         type="number"
                         name="Delta G"
+                        domain={[-30, 0]}
+                        allowDataOverflow
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
