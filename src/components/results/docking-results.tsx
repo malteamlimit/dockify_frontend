@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { timeAgo, validateComplexViolations } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
-import { InterChart } from "@/components/results/inter-chart";
+import { HistoChart } from "@/components/results/histo-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DockingResultsTable } from "@/components/results/docking-results-table";
 import { RmsdChart } from "@/components/results/rmsd-chart";
@@ -21,6 +21,9 @@ export function DockingResults() {
   const qedThreshold = useSettingsStore((state) => state.qedThreshold);
   const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
   const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
+
+  // State for highlighting complexes when hovering over histogram bins
+  const [highlightedComplexIndices, setHighlightedComplexIndices] = React.useState<number[]>([]);
 
   // filter complexes that have no violations for the current thresholds
   const validComplexes = currentJob?.complexes?.filter(complex => {
@@ -130,7 +133,7 @@ export function DockingResults() {
                       <RmsdChart chartData={validComplexes}/>
                     </div>
                     <div className="flex-4 min-w-0">
-                      <InterChart complexList={currentJob.complexes ?? []}/>
+                      <HistoChart complexList={validComplexes} complexListFull={currentJob?.complexes} onHoverBinChangeAction={setHighlightedComplexIndices}/>
                     </div>
                   </>
             </div>
@@ -138,7 +141,7 @@ export function DockingResults() {
 
           <h3 className="text-lg font-medium">Docking Complexes</h3>
           <div className="w-full">
-            <DockingResultsTable job={currentJob} />
+            <DockingResultsTable job={currentJob} highlightedComplexIndices={highlightedComplexIndices} />
           </div>
         </div>
       </CardContent>

@@ -46,6 +46,7 @@
   --color-warning-bg: var(--warning-bg);
   --color-warning-border: var(--warning-border);
   --color-warning-text: var(--warning-text);
+  --color-chart-3-muted: var(--chart-3-muted);
 }
 
 :root {
@@ -86,6 +87,7 @@
   --warning-bg: hsl(49, 100%, 97%);
   --warning-border: hsl(49, 91%, 84%);
   --warning-text: hsl(31, 92%, 45%);
+  --chart-3-muted: #dde6f3;
 }
 
 .dark {

@@ -160,6 +160,16 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
     resizable: true,
   };
 
+  const getRowStyle = (params: any) => {
+    if (highlightedComplexIndices.includes(params.data.index)) {
+      return {
+        backgroundColor: 'var(--chart-3-muted)',
+        boxShadow: 'inset 4px 0 0 0 var(--chart-1)',
+      };
+    }
+    return undefined;
+  };
+
   const rowData = complexList.map((complex, index) => ({
     ...complex,
     index
@@ -172,6 +182,7 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
+          getRowStyle={getRowStyle}
           animateRows={true}
           domLayout="autoHeight"
           theme={themeQuartz}
