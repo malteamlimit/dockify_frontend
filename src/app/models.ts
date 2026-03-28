@@ -51,6 +51,7 @@ export interface DockingJob {
     is_sub: boolean,
     thumbnailRefresh?: number,
     job?: DockingJob
+  best_complex_nr: number | null;
 }
 
   export interface Window {
