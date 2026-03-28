@@ -14,18 +14,25 @@ import {
 
 
 interface DockingState {
+  // ============ Loading State ============
   isLoading: boolean;
+
+  // ============ Job Management ============
+  jobs: DockingJob[];
   fetchJobs: () => Promise<void>;
   createJob: () => Promise<void>;
   createCopy: (job_id: string) => Promise<void>;
+  removeJob: (jobId: string) => void;
 
+  // ============ Current Job Selection ============
   currentJobId: string | null;
   getCurrentJob: () => DockingJob | null;
   setCurrentJobId: (job_id: string) => void;
+
+  // ============ Job Structure & Properties ============
   setCurrentSmiles: (smiles: string) => void;
   setCurrentSdf: (object: {sdf: string} | null) => void;
   updateStructure: (smiles: string, sdf: string) => void;
-  setCurrentStatus: (job_status: "draft" | "running" | "completed" | "failed") => void;
   setCurrentProps: (props: {
     weight: number;
     hbond_acc: number;
@@ -35,19 +42,22 @@ interface DockingState {
     is_sub: boolean;
   }) => void;
   setCurrentName: (name: string) => void;
+
+  // ============ Job Status & Execution ============
+  setCurrentStatus: (job_status: "draft" | "running" | "completed" | "failed") => void;
   runPropertiesCalculation: () => Promise<void>;
   runDocking: (name: string, runs: number) => Promise<void>;
 
+  // ============ UI Utilities ============
   refreshCurrentJobThumbnail: () => void;
 
-  jobs: DockingJob[];
-  removeJob: (jobId: string) => void;
 
 }
 
 export const useDockingStore = create(immer<DockingState>((set, get) => ({
   isLoading: true,
 
+  // ============ Current Job Selection ============
   currentJobId: null,
   getCurrentJob: () => {
     const state = get();
@@ -56,6 +66,8 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
         : null;
   },
   setCurrentJobId: (job_id) => set({currentJobId: job_id}),
+
+  // ============ Job Structure & Properties Updates ============
   setCurrentSmiles: (smiles) => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
     if (jobIndex >= 0) {
@@ -84,12 +96,16 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs[jobIndex].name = name;
     }
   }),
+
+  // ============ Job Status Management ============
   setCurrentStatus: (job_status) => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
     if (jobIndex >= 0) {
       state.jobs[jobIndex].job_status = job_status;
     }
   }),
+
+  // ============ Molecular Properties ============
   setCurrentProps: (props) => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
     if (jobIndex >= 0) {
@@ -101,22 +117,20 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs[jobIndex].is_sub = props.is_sub;
     }
   }),
+
+  // ============ Asynchronous Operations ============
   runPropertiesCalculation: async () => set(async (state) => {
     const currentJob = state.getCurrentJob();
     if (!currentJob) return;
 
     try {
-
       const props = await getProps(currentJob.smiles, currentJob.job_id);
-
       state.setCurrentProps(props);
-
     } catch (e) {
       console.error('Error running properties calculation', e);
     }
-
-
   }),
+
   runDocking: async (name, runs) => set(async (state) => {
     const currentJob = get().getCurrentJob();
     if (!currentJob) return;
@@ -129,9 +143,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
         state.setCurrentName(name)
       }
 
-
       if (await runDockingAPI(currentJob!.job_id, runs)) {
-        console.log('Docking started NOOOOOOOWWW AWAITING THE OPENING OF THE WEBSOCKET');
         await wsGetJobUpdates(currentJob!.job_id, (data) => {
           set(state => {
             const jobIndex = state.jobs.findIndex(job => job.job_id === data.job_id);
@@ -146,23 +158,15 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error running docking:', error);
-      // state.setCurrentStatus("failed")
     }
   }),
 
+  // ============ Job Management Operations ============
   jobs: [],
-  removeJob: (jobId) => set((state) => {
-    state.jobs = state.jobs.filter(job => job.job_id !== jobId);
-    if (state.currentJobId === jobId) {
-      state.currentJobId = null;
-    }
-  }),
-
   fetchJobs: async () => {
     set({isLoading: true});
     try {
       const jobs = await getAllJobs();
-
       set({jobs, isLoading: false});
 
       set((state) => {
@@ -176,6 +180,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       set({isLoading: false});
     }
   },
+
   createJob: async () => {
     const job = getDefaultJob()
     const jobPublicRaw: string = await createJob(job)
@@ -186,6 +191,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
     })
     await get().runPropertiesCalculation();
   },
+
   createCopy: async (job_id: string) => {
     const job = getCopy(get().jobs.find(job => job.job_id === job_id) || getDefaultJob())
     const jobPublic_raw: string = await createJob(job)
@@ -196,6 +202,15 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
     })
     await get().runPropertiesCalculation();
   },
+
+  removeJob: (jobId) => set((state) => {
+    state.jobs = state.jobs.filter(job => job.job_id !== jobId);
+    if (state.currentJobId === jobId) {
+      state.currentJobId = null;
+    }
+  }),
+
+  // ============ UI Utilities ============
   refreshCurrentJobThumbnail: () => set((state) => {
     const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
     if (jobIndex >= 0) {
@@ -206,45 +221,98 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
 
 
 
+// ============ Default Job Factory ============
+/**
+ * Creates a new default docking job with initial values
+ * All molecular properties are set to null initially and calculated via runPropertiesCalculation
+ */
 export function getDefaultJob(): DockingJob {
-  const job = {
+  return {
+    // ---- Core Identity ----
     job_id: uuidv4(),
     name: 'Unknown Structure',
     created: new Date().toISOString(),
-    // TODO: Fetch from Settings
-    constraints: [[364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125], [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25], [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25], [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25], [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]],
     job_status: 'draft',
-    runs: 0,
-    // TODO: Fetch from Settings
-    // smiles: 'CN(C(=O)CN3CC2(CCN(C(=O)c1cccnc1)CC2)C3)c5ccc4COCc4c5',
+
+    // ---- Molecular Structure ----
+    // TODO: Consider fetching default SMILES from Settings store
     smiles: 'O=CN1CCC2(CNC2)CC1',
-    sdf: '',
+    sdf: null,
+
+    // ---- Molecular Properties (initialized as null, calculated later) ----
+    weight: 0,
+    hbond_acc: 0,
+    hbond_don: 0,
+    logp: 0,
+    qed: 0,
+    is_sub: false,
+
+    // ---- Docking Configuration ----
+    // TODO: Fetch constraints from Settings store
+    constraints: [
+      [364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125],
+      [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25],
+      [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25],
+      [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25],
+      [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]
+    ],
+    runs: 0,
+
+    // ---- Docking Results ----
+    best_complex_nr: 0,
+    complexes: [],
+
+    // ---- Status & Error Handling ----
     error: null,
     progress: 0,
     progress_info: '',
-    complexes: [],
-  }
-  return job
+  };
 }
 
 
-export function getCopy(job_old: DockingJob): DockingJob {
-  const job = {
+// ============ Job Copy Factory ============
+/**
+ * Creates a copy of an existing docking job with a new ID
+ * Preserves the SMILES structure but resets docking results and running state
+ */
+export function getCopy(jobOld: DockingJob): DockingJob {
+  return {
+    // ---- Core Identity (new ID and timestamp) ----
     job_id: uuidv4(),
-    name: job_old.name,
+    name: jobOld.name,
     created: new Date().toISOString(),
-    // TODO: Fetch from Settings
-    constraints: [[364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125], [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25], [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25], [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25], [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]],
     job_status: 'draft',
+
+    // ---- Molecular Structure (copy from original) ----
+    smiles: jobOld.smiles,
+    sdf: null,
+
+    // ---- Molecular Properties (copy from original) ----
+    weight: jobOld.weight,
+    hbond_acc: jobOld.hbond_acc,
+    hbond_don: jobOld.hbond_don,
+    logp: jobOld.logp,
+    qed: jobOld.qed,
+    is_sub: jobOld.is_sub,
+
+    // ---- Docking Configuration ----
+    // TODO: Fetch constraints from Settings store
+    constraints: [
+      [364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125],
+      [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25],
+      [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25],
+      [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25],
+      [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]
+    ],
     runs: 0,
-    // TODO: Fetch from Settings
-    // smiles: 'CN(C(=O)CN3CC2(CCN(C(=O)c1cccnc1)CC2)C3)c5ccc4COCc4c5',
-    smiles: job_old.smiles,
-    sdf: '',
+
+    // ---- Docking Results (reset for new docking) ----
+    best_complex_nr: null,
+    complexes: [],
+
+    // ---- Status & Error Handling ----
     error: null,
     progress: 0,
     progress_info: '',
-    complexes: [],
-  }
-  return job
+  };
 }
