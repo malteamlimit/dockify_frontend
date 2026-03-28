@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { useDockingStore } from "@/store/docking-store";
 import { useSettingsStore } from "@/store/settings-store";
-import { timeAgo } from "@/lib/utils";
+import { timeAgo, validateComplexViolations } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
 import { InterChart } from "@/components/results/inter-chart";
@@ -19,6 +19,13 @@ import { OctagonAlert } from "lucide-react";
 export function DockingResults() {
   const currentJob = useDockingStore(state => state.getCurrentJob());
   const qedThreshold = useSettingsStore((state) => state.qedThreshold);
+  const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
+  const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
+
+  // filter complexes that have no violations for the current thresholds
+  const validComplexes = currentJob?.complexes?.filter(complex => {
+    return validateComplexViolations(complex, deltaGThreshold, atomPairCstThreshold).length === 0;
+  }) ?? [];
 
   if (currentJob?.weight === null) {
     return (
@@ -120,7 +127,7 @@ export function DockingResults() {
             <div className="flex flex-col md:flex-row gap-4 mt-2 h-full w-full">
                   <>
                     <div className="flex-3 min-w-0">
-                      <RmsdChart chartData={currentJob.complexes}/>
+                      <RmsdChart chartData={validComplexes}/>
                     </div>
                     <div className="flex-4 min-w-0">
                       <InterChart complexList={currentJob.complexes ?? []}/>

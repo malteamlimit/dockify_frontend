@@ -8,7 +8,8 @@ import {translate} from "@/lib/translation";
 import {HardDriveDownload, OctagonAlert} from "lucide-react";
 import {themeQuartz} from 'ag-grid-community';
 import {Button} from "@/components/ui/button";
-import {handlePDBDownload} from "@/lib/utils";
+import {handlePDBDownload, validateDeltaG, validateAtomPairCst} from "@/lib/utils";
+import {useSettingsStore} from "@/store/settings-store";
 ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 interface ComplexWithIndex extends Complex {
@@ -18,6 +19,8 @@ interface ComplexWithIndex extends Complex {
 export function DockingResultsTable({ job }: { job: DockingJob }) {
   const complexList = job.complexes ?? [];
   const bestComplexId = job.best_complex_nr;
+  const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
+  const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
 
   const columnDefs: ColDef<ComplexWithIndex>[] = [
     {
@@ -39,62 +42,30 @@ export function DockingResultsTable({ job }: { job: DockingJob }) {
       headerName: "Delta G",
       valueFormatter: (params: ValueFormatterParams<ComplexWithIndex, number>) => params.value!.toFixed(4),
       cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => {
-        const constraint_name = "DELTA_G";
+        const hasDeltaGViolation = validateDeltaG(params.data!, deltaGThreshold);
         return (
-          <div>
-            {params.data?.violation?.includes(constraint_name) ? (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="flex items-center text-sm/0 bg-red-100 rounded-md pl-2">
-                      {params.value.toFixed(4)}
-                      <div className="flex items-center justify-center bg-red-100 text-red-800 text-xs font-medium w-6 h-6 rounded-full">
-                        <OctagonAlert size={14}/>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                      <div className="text-sm flex flex-col items-center align-middle gap-1">
-                          <div className="text-red-300">{translate(constraint_name)}</div>
-                      </div>
-                  </TooltipContent>
-                </Tooltip>
-            ) : (
-                params.value.toFixed(4)
-            )}
-          </div>
+          <ViolationCell
+            value={params.value}
+            constraintName="DELTA_G"
+            violations={hasDeltaGViolation ? ["DELTA_G"] : []}
+          />
         );
-      }
+      },
     },
     {
       field: "atom_pair_cst",
       headerName: "Atom Pair CST",
       valueFormatter: (params: ValueFormatterParams<ComplexWithIndex, number>) => params.value!.toFixed(4),
       cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => {
-        const constraint_name = "ATOM_PAIR_CST";
+        const hasAtomPairCstViolation = validateAtomPairCst(params.data!, atomPairCstThreshold);
         return (
-          <div>
-            {params.data?.violation?.includes(constraint_name) ? (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="flex items-center text-sm/0 bg-red-100 rounded-md pl-2">
-                      {params.value.toFixed(4)}
-                      <div className="flex items-center justify-center bg-red-100 text-red-800 text-xs font-medium w-6 h-6 rounded-full">
-                        <OctagonAlert size={14}/>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                      <div className="text-sm flex flex-col items-center align-middle gap-1">
-                          <div className="text-red-300">{translate(constraint_name)}</div>
-                      </div>
-                  </TooltipContent>
-                </Tooltip>
-            ) : (
-                params.value.toFixed(4)
-            )}
-          </div>
+          <ViolationCell
+            value={params.value}
+            constraintName="ATOM_PAIR_CST"
+            violations={hasAtomPairCstViolation ? ["ATOM_PAIR_CST"] : []}
+          />
         );
-      }
+      },
     },
     {
       field: "total_score",

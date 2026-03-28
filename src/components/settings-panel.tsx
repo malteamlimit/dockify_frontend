@@ -52,7 +52,9 @@ export function SettingsPanel() {
 
   const qedThreshold = useSettingsStore((state) => state.qedThreshold);
   const enforceSubstructure = useSettingsStore((state) => state.enforceSubstructure);
-  const { setQedThreshold, setEnforceSubstructure } = useSettingsStore()
+  const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
+  const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
+  const { setQedThreshold, setEnforceSubstructure, setDeltaGThreshold, setAtomPairCstThreshold } = useSettingsStore()
 
   const incrementQed = () => {
     const newValue = Math.min(1, qedThreshold + 0.05);
@@ -62,6 +64,23 @@ export function SettingsPanel() {
   const decrementQed = () => {
     const newValue = Math.max(0, qedThreshold - 0.05);
     setQedThreshold(Number(newValue.toFixed(2)));
+  };
+
+  const incrementDeltaG = () => {
+    setDeltaGThreshold(Number((deltaGThreshold + 0.1).toFixed(1)));
+  };
+
+  const decrementDeltaG = () => {
+    setDeltaGThreshold(Number((deltaGThreshold - 0.1).toFixed(1)));
+  };
+
+  const incrementAtomPairCst = () => {
+    setAtomPairCstThreshold(Number((atomPairCstThreshold + 0.5).toFixed(1)));
+  };
+
+  const decrementAtomPairCst = () => {
+    const newValue = Math.max(0, atomPairCstThreshold - 0.5);
+    setAtomPairCstThreshold(Number(newValue.toFixed(1)));
   };
 
   // handle db export for backup purposes
@@ -210,8 +229,8 @@ export function SettingsPanel() {
                       type="number"
                       inputMode={'numeric'}
                       step={0.1}
-                      max={0}
-                      defaultValue={0}
+                      value={deltaGThreshold}
+                      onChange={(e) => setDeltaGThreshold(Number(e.target.value))}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
@@ -221,6 +240,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={decrementDeltaG}
                     aria-label="Decrement"
                 >
                   <Minus/>
@@ -230,6 +250,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={incrementDeltaG}
                     aria-label="Increment"
                 >
                   <Plus/>
@@ -254,7 +275,8 @@ export function SettingsPanel() {
                       inputMode={'numeric'}
                       step={0.5}
                       min={0}
-                      defaultValue={15}
+                      value={atomPairCstThreshold}
+                      onChange={(e) => setAtomPairCstThreshold(Number(e.target.value))}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
@@ -264,6 +286,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={decrementAtomPairCst}
                     aria-label="Decrement"
                 >
                   <Minus/>
@@ -273,6 +296,7 @@ export function SettingsPanel() {
                     size="icon-sm"
                     type="button"
                     className="h-9"
+                    onClick={incrementAtomPairCst}
                     aria-label="Increment"
                 >
                   <Plus/>
