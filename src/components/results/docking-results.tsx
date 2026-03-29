@@ -129,10 +129,10 @@ export function DockingResults() {
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-2 h-full w-full">
                   <>
-                    <div className="flex-3 min-w-0">
+                    <div className="flex-1 min-w-0">
                       <RmsdChart chartData={validComplexes}/>
                     </div>
-                    <div className="flex-4 min-w-0">
+                    <div className="flex-1 min-w-0">
                       <HistoChart complexList={validComplexes} complexListFull={currentJob?.complexes} onHoverBinChangeAction={setHighlightedComplexIndices}/>
                     </div>
                   </>

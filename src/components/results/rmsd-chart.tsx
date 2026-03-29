@@ -81,63 +81,69 @@ export function RmsdChart({ chartData }: { chartData: Complex[] }) {
     }
 
     return (
-      <Card className="shadow-none pb-1.5 h-full">
+      <Card className="shadow-none pb-1.5 h-full flex flex-col">
         <CardHeader>
             <div>
                 <CardTitle>Delta G relative to RMSD</CardTitle>
                 <CardDescription>Scatter plot</CardDescription>
             </div>
         </CardHeader>
-        <CardContent className="px-2 pb-4 w-full h-full">
-            <ChartContainer config={chartConfig} className="w-full h-full">
-                <ScatterChart
-                    margin={{
-                        left: 12,
-                        right: 18,
-                        bottom: 26,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="5 3"/>
-                    <XAxis
-                        dataKey="rmsd"
-                        type="number"
-                        name="RMSD"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={4}
-                        tickCount={7}
+        <CardContent className="flex-1 flex items-center justify-center px-2 pb-4 w-full min-h-0">
+            {chartData.length > 0 ? (
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ScatterChart
+                        margin={{
+                            left: 12,
+                            right: 18,
+                            bottom: 26,
+                        }}
                     >
-                        <Label content={renderXAxisLabelContent} value={translate("rmsd")}/>
-                    </XAxis>
-                    <YAxis
-                        dataKey="delta_g"
-                        type="number"
-                        name="Delta G"
-                        domain={[-30, 0]}
-                        allowDataOverflow
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={8}
-                        tickCount={7}
-                    >
-                        <Label content={renderYAxisLabelContent} value={translate("delta_g")}/>
-                    </YAxis>
-                    <ChartTooltip
-                        cursor={{strokeDasharray: '3 3'}}
-                        content={<ChartTooltipContent
-                            hideLabel
-                            indicator="line"
-                            color={"var(--chart-3)"}
-                        />}
-                    />
-                    <Scatter
-                        data={chartData}
-                        color="#000000"
-                        shape={<RenderDot fill={"var(--chart-3)"} r={5} />}
-                        activeShape={<RenderDot fill={"var(--chart-3"} r={8} />}
-                    />
-                </ScatterChart>
-            </ChartContainer>
+                        <CartesianGrid strokeDasharray="5 3"/>
+                        <XAxis
+                            dataKey="rmsd"
+                            type="number"
+                            name="RMSD"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={4}
+                            tickCount={7}
+                        >
+                            <Label content={renderXAxisLabelContent} value={translate("rmsd")}/>
+                        </XAxis>
+                        <YAxis
+                            dataKey="delta_g"
+                            type="number"
+                            name="Delta G"
+                            domain={[-30, 0]}
+                            allowDataOverflow
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            tickCount={7}
+                        >
+                            <Label content={renderYAxisLabelContent} value={translate("delta_g")}/>
+                        </YAxis>
+                        <ChartTooltip
+                            cursor={{strokeDasharray: '3 3'}}
+                            content={<ChartTooltipContent
+                                hideLabel
+                                indicator="line"
+                                color={"var(--chart-3)"}
+                            />}
+                        />
+                        <Scatter
+                            data={chartData}
+                            color="#000000"
+                            shape={<RenderDot fill={"var(--chart-3)"} r={5} />}
+                            activeShape={<RenderDot fill={"var(--chart-3"} r={8} />}
+                        />
+                    </ScatterChart>
+                </ChartContainer>
+            ) : (
+                <div className="text-muted-foreground py-8">
+                    No data available yet.
+                </div>
+            )}
         </CardContent>
       </Card>
     )

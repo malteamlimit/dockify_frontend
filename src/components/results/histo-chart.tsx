@@ -54,7 +54,7 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
   ] as const;
 
   const [selectedMetric, setSelectedMetric] = useState<typeof complexKeys[number]>("delta_g");
-  const [showKDE, setShowKDE] = useState(true);
+  const [showKDE, setShowKDE] = useState(false);
 
   // Map indices from filtered list to full list
   const mapFilteredIndicesToFullList = (filteredIndices: number[]): number[] => {
@@ -213,7 +213,7 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
   const chartData = createHistogramData(selectedMetric);
 
   return (
-    <Card className="shadow-none">
+    <Card className="shadow-none h-full flex flex-col">
       <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle>{translate(selectedMetric)} Histogram</CardTitle>
@@ -249,13 +249,13 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex items-center justify-center w-full min-h-0">
         {chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="w-full h-full">
             <ComposedChart
               accessibilityLayer
               data={chartData}
-              barCategoryGap={0}
+              barCategoryGap={1.5}
               onMouseMove={(state) => {
                 if (showKDE && state.activeTooltipIndex !== undefined) {
                   const dataPoint = chartData[state.activeTooltipIndex];
@@ -276,19 +276,30 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
               }}
             >
               <CartesianGrid vertical={false} />
-              <XAxis
-                type="number"
-                dataKey="binCenter"
-                domain={[
-                  chartData.length > 0 ? chartData[0].binStart : 0,
-                  chartData.length > 0 ? chartData[chartData.length - 1].binEnd : 1
-                ]}
-                tickLine={true}
-                tickMargin={10}
-                axisLine={false}
-                tick={{ fontSize: 12 }}
-                tickFormatter={(value) => value.toFixed(2)}
-              />
+              {(() => {
+                const domainStart = chartData[0].binStart;
+                const domainEnd = chartData[chartData.length - 1].binEnd;
+                const domainLength = domainEnd - domainStart;
+                return (
+                  <XAxis
+                    type="number"
+                    dataKey="binCenter"
+                    domain={[domainStart, domainEnd]}
+                    ticks={[
+                      domainStart,
+                      domainStart + domainLength / 4,
+                      domainStart + domainLength / 2,
+                      domainStart + domainLength * 3 / 4,
+                      domainEnd
+                    ]}
+                    tickLine={true}
+                    tickMargin={10}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => value.toFixed(2)}
+                  />
+                );
+              })()}
               <YAxis
                 tickLine={false}
                 axisLine={false}
@@ -324,8 +335,10 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
               />
               <Bar
                 dataKey="value"
-                fill="var(--chart-3)"
-                radius={0}
+                fill="var(--accent)"
+                stroke="var(--chart-3)"
+                strokeWidth={1.5}
+                radius={3}
                 isAnimationActive={true}
               />
               {showKDE && (
@@ -342,8 +355,8 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
             </ComposedChart>
           </ChartContainer>
         ) : (
-          <div className="text-center text-muted-foreground py-8">
-            No data available for selected metric
+          <div className="text-muted-foreground py-8">
+            No data available yet.
           </div>
         )}
       </CardContent>
