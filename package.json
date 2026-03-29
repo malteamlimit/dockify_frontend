@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev/woTurbo": "next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -28,10 +27,10 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@rdkit/rdkit": "^2025.3.2-1.0.0",
-    "@tanstack/react-table": "^8.21.3",
     "ag-grid-react": "^33.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "immer": "^11.1.4",
     "ketcher-core": "^3.12.0",
     "ketcher-react": "^3.12.0",
     "ketcher-standalone": "^3.12.0",
