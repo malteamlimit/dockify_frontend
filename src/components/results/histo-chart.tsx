@@ -257,7 +257,7 @@ export function HistoChart({ complexList, complexListFull, onHoverBinChangeActio
               data={chartData}
               barCategoryGap={1.5}
               onMouseMove={(state) => {
-                if (showKDE && state.activeTooltipIndex !== undefined) {
+                if (state.activeTooltipIndex !== undefined) {
                   const dataPoint = chartData[state.activeTooltipIndex];
                   if (dataPoint && onHoverBinChangeAction) {
                     // Check if this is the last bin by comparing with the last chart data point's binEnd
