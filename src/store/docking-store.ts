@@ -119,17 +119,27 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
   }),
 
   // ============ Asynchronous Operations ============
-  runPropertiesCalculation: async () => set(async (state) => {
-    const currentJob = state.getCurrentJob();
+  runPropertiesCalculation: async () => {
+    const currentJob = get().getCurrentJob();
     if (!currentJob) return;
 
     try {
       const props = await getProps(currentJob.smiles, currentJob.job_id);
-      state.setCurrentProps(props);
+      set((state) => {
+        const jobIndex = state.jobs.findIndex(job => job.job_id === state.currentJobId);
+        if (jobIndex >= 0) {
+          state.jobs[jobIndex].weight = props.weight;
+          state.jobs[jobIndex].hbond_acc = props.hbond_acc;
+          state.jobs[jobIndex].hbond_don = props.hbond_don;
+          state.jobs[jobIndex].logp = props.logp;
+          state.jobs[jobIndex].qed = props.qed;
+          state.jobs[jobIndex].is_sub = props.is_sub;
+        }
+      });
     } catch (e) {
       console.error('Error running properties calculation', e);
     }
-  }),
+  },
 
   runDocking: async (name, runs) => set(async (state) => {
     const currentJob = get().getCurrentJob();
