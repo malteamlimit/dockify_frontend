@@ -1,0 +1,32 @@
+name: dockify
+
+services:
+
+  frontend:
+    image: optimalte/dockify-frontend:dev
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+  backend:
+    image: optimalte/dockify-backend:dev
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - ./backend/data:/app/data
+#       - ./backend/input:/app/input
+      - poses_vol:/app/app/static/poses
+      - previews_vol:/app/app/static/previews
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+volumes:
+  poses_vol:
+  previews_vol:
