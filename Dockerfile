@@ -1,5 +1,9 @@
+# Build arguments
+ARG BUILDOS=linux
+ARG BUILDARCH=amd64
+
 # First stage: build the app
-FROM node:18-alpine AS builder
+FROM --platform=${BUILDOS}/${BUILDARCH} node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -8,7 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --force
+RUN npm ci --legacy-peer-deps
 
 # Copy app source
 COPY . .
@@ -16,11 +20,8 @@ COPY . .
 # Build the app in standalone mode
 RUN npm run build
 
-# Manually copy static files for standalone
-RUN cp -r .next/static .next/standalone/.next/static
-
 # Second stage: production image
-FROM node:18-alpine AS runner
+FROM --platform=${BUILDOS}/${BUILDARCH} node:22-alpine AS runner
 
 # Set working directory
 WORKDIR /app
