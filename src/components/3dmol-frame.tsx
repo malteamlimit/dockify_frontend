@@ -29,9 +29,10 @@ const ThreeDmolFrame = () => {
       // Determine which complex to load: selected complex from table, best complex, or molecule editor
       let complexNr: number | null = null;
 
-      if (selectedComplexIndex !== null) {
+      // Only use selectedComplexIndex if there are actually complexes available
+      if (selectedComplexIndex !== null && currentJob.complexes && currentJob.complexes.length > 0) {
         complexNr = selectedComplexIndex;
-      } else if (currentJob.best_complex_nr !== null) {
+      } else if (currentJob.best_complex_nr !== null && currentJob.complexes && currentJob.complexes.length > 0) {
         complexNr = currentJob.best_complex_nr;
       }
 
@@ -65,7 +66,7 @@ const ThreeDmolFrame = () => {
 
     void loadModel()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentJob?.sdf, currentJob?.best_complex_nr, selectedComplexIndex, currentJob?.job_id])
+  }, [currentJob?.sdf, currentJob?.best_complex_nr, currentJob?.complexes?.length, selectedComplexIndex, currentJob?.job_id])
 
   const toggleSpin = () => {
     if (!viewerRef.current) return
