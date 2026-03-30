@@ -14,6 +14,7 @@ import {
 import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
+import { LigandPropertiesBar } from "@/components/ligand-properties-bar";
 
 import { useDockingStore } from "@/store/docking-store";
 import {Copy} from "lucide-react";
@@ -45,9 +46,10 @@ export default function Home() {
       }
     >
       <AppSidebar />
-      <SidebarInset className="h-screen overflow-y-auto">
+      <SidebarInset className="h-screen overflow-y-auto gap-2">
         <AppHeader />
-        <div className="flex flex-col gap-4 my-4">
+        <LigandPropertiesBar />
+        <div className="flex flex-col gap-4">
           <div className="h-[800px] flex px-4 gap-4">
             <div className="w-1/2 relative">
 
