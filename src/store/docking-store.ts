@@ -158,7 +158,12 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
           set(state => {
             const jobIndex = state.jobs.findIndex(job => job.job_id === data.job_id);
             if (jobIndex >= 0) {
+              // Preserve thumbnailRefresh to maintain cache invalidation
+              const previousThumbnailRefresh = state.jobs[jobIndex].thumbnailRefresh;
               state.jobs[jobIndex] = data
+              if (previousThumbnailRefresh) {
+                state.jobs[jobIndex].thumbnailRefresh = previousThumbnailRefresh;
+              }
               if (data.error) {
                 state.jobs[jobIndex].error = data.error;
               }
