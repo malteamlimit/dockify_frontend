@@ -167,8 +167,8 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
     resizable: true,
   };
 
-  const getRowStyle = (params: any) => {
-    if (highlightedComplexIndices.includes(params.data.index)) {
+  const getRowStyle = (params: { data?: ComplexWithIndex }) => {
+    if (params.data && highlightedComplexIndices.includes(params.data.index)) {
       return {
         backgroundColor: 'var(--chart-3-muted)',
         boxShadow: 'inset 4px 0 0 0 var(--chart-1)',
