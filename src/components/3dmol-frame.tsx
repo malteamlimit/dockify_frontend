@@ -11,6 +11,7 @@ const ThreeDmolFrame = () => {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   const currentJob = useDockingStore(state => state.getCurrentJob());
+  const selectedComplexIndex = useDockingStore(state => state.selectedComplexIndex);
   const { refreshCurrentJobThumbnail } = useDockingStore()
 
   const [isSpinning, setIsSpinning] = useState(false)
@@ -25,9 +26,18 @@ const ThreeDmolFrame = () => {
       viewerRef.current!.clear()
       setIsError(false)
 
-      if (currentJob.best_complex_nr !== null) {
+      // Determine which complex to load: selected complex from table, best complex, or molecule editor
+      let complexNr: number | null = null;
+
+      if (selectedComplexIndex !== null) {
+        complexNr = selectedComplexIndex;
+      } else if (currentJob.best_complex_nr !== null) {
+        complexNr = currentJob.best_complex_nr;
+      }
+
+      if (complexNr !== null) {
         try {
-          const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${currentJob.job_id}_${currentJob.best_complex_nr}.pdb`;
+          const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${currentJob.job_id}_${complexNr}.pdb`;
           const response = await fetch(url);
           console.log("Response:", response);
           if (!response.ok) {
@@ -38,7 +48,7 @@ const ThreeDmolFrame = () => {
           viewerRef.current!.addModel(pdbText, 'pdb')
           viewerRef.current!.setStyle({chain: 'A'}, {cartoon: {color: 'orange'}});
           viewerRef.current!.setStyle({chain: 'B'}, {stick: {color: 'green'}});
-          setCurrentModel("Best Complex (Index " + currentJob.best_complex_nr + ")")
+          setCurrentModel("Complex (Run " + (complexNr + 1) + ")")
         } catch (error) {
           console.error("Error loading conformer in 3DMol viewer:", error)
           setIsError(true)
@@ -55,7 +65,7 @@ const ThreeDmolFrame = () => {
 
     void loadModel()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentJob?.sdf, currentJob?.best_complex_nr])
+  }, [currentJob?.sdf, currentJob?.best_complex_nr, selectedComplexIndex, currentJob?.job_id])
 
   const toggleSpin = () => {
     if (!viewerRef.current) return

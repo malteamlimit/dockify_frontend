@@ -10,6 +10,7 @@ import {themeQuartz} from 'ag-grid-community';
 import {Button} from "@/components/ui/button";
 import {handlePDBDownload, validateDeltaG, validateAtomPairCst} from "@/lib/utils";
 import {useSettingsStore} from "@/store/settings-store";
+import {useDockingStore} from "@/store/docking-store";
 ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 interface ComplexWithIndex extends Complex {
@@ -54,6 +55,9 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
   const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
   const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
 
+  const selectedComplexIndex = useDockingStore((state) => state.selectedComplexIndex);
+  const setSelectedComplexIndex = useDockingStore((state) => state.setSelectedComplexIndex);
+
   const columnDefs: ColDef<ComplexWithIndex>[] = [
     {
       field: "index",
@@ -61,10 +65,13 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
       filter: false,
       cellRenderer: (params: ICellRendererParams<ComplexWithIndex>) => {
         const value = params.value as number;
+        const isViewer = selectedComplexIndex === value;
+        const isBest = value === bestComplexId;
         return (
            <div>
              <div className="inline-flex text-muted-foreground">{value + 1}</div>
-             {value === bestComplexId ? <Badge variant="outline" color="#009A00" className="ml-2">Best</Badge> : ""}
+             {isBest ? <Badge variant="outline" color="#009A00" className="ml-2">Best</Badge> : ""}
+             {isViewer && !isBest ? <Badge variant="outline" color="#0084FF" className="ml-2">Viewer</Badge> : ""}
            </div>
         );
       },
@@ -170,6 +177,12 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
     return undefined;
   };
 
+  const onRowClicked = (event: { data?: ComplexWithIndex }) => {
+    if (event.data) {
+      setSelectedComplexIndex(event.data.index);
+    }
+  }
+
   const rowData = complexList.map((complex, index) => ({
     ...complex,
     index
@@ -183,6 +196,7 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           getRowStyle={getRowStyle}
+          onRowClicked={onRowClicked}
           animateRows={true}
           domLayout="autoHeight"
           theme={themeQuartz}

@@ -51,6 +51,9 @@ interface DockingState {
   // ============ UI Utilities ============
   refreshCurrentJobThumbnail: () => void;
 
+  // ============ Result Viewing ============
+  selectedComplexIndex: number | null;
+  setSelectedComplexIndex: (index: number | null) => void;
 
 }
 
@@ -65,7 +68,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
         ? state.jobs.find(job => job.job_id === state.currentJobId) || null
         : null;
   },
-  setCurrentJobId: (job_id) => set({currentJobId: job_id}),
+  setCurrentJobId: (job_id) => set({currentJobId: job_id, selectedComplexIndex: null}),
 
   // ============ Job Structure & Properties Updates ============
   setCurrentSmiles: (smiles) => set((state) => {
@@ -231,7 +234,11 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
     if (jobIndex >= 0) {
       state.jobs[jobIndex].thumbnailRefresh = Date.now();
     }
-  })
+  }),
+
+  // ============ Result Viewing ============
+  selectedComplexIndex: null,
+  setSelectedComplexIndex: (index) => set({selectedComplexIndex: index}),
 })))
 
 
