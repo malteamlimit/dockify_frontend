@@ -39,12 +39,14 @@ import {
   Minus,
   Trash2,
   HardDriveDownload,
-  HardDriveUpload
+  HardDriveUpload,
+  Loader2
 } from "lucide-react"
 
 export function SettingsPanel() {
   const [isExporting, setIsExporting] = React.useState(false)
   const [isImporting, setIsImporting] = React.useState(false)
+  const [exportProgress, setExportProgress] = React.useState<{ received: number; total: number | null } | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const fetchJobs = useDockingStore((state) => state.fetchJobs)
 
@@ -86,14 +88,36 @@ export function SettingsPanel() {
   // handle db export for backup purposes
   const handleExport = () => {
     setIsExporting(true)
-    exportDatabase().then((value) => {
+    setExportProgress({ received: 0, total: null })
+    exportDatabase((received, total) => {
+      setExportProgress({ received, total })
+    }).then((value) => {
       const dateStr = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '')
-      const name = `dockify_database_${dateStr}.db`
+      const name = `dockify_backup_${dateStr}.zip`
       downloadBlob(value, name)
     })
         .catch((e: Error) => toast.error('Error: ' + e.message))
-        .finally(() => setIsExporting(false))
+        .finally(() => {
+          setIsExporting(false)
+          setExportProgress(null)
+        })
   }
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const exportLabel = (() => {
+    if (!isExporting) return 'Export'
+    if (!exportProgress || exportProgress.received === 0) return 'Preparing...'
+    if (exportProgress.total) {
+      const pct = Math.round((exportProgress.received / exportProgress.total) * 100)
+      return `Exporting ${pct}%`
+    }
+    return `Exporting ${formatBytes(exportProgress.received)}`
+  })()
 
   // handle db import for backup purposes
   const handleImport = () => {
@@ -145,7 +169,7 @@ export function SettingsPanel() {
           <input
               ref={fileInputRef}
               type="file"
-              accept=".db"
+              accept=".zip"
               onChange={handleFileChange}
               style={{display: 'none'}}
           />
@@ -309,7 +333,7 @@ export function SettingsPanel() {
             <Field orientation="vertical">
               <FieldContent>
                 <FieldLabel>Database Backup</FieldLabel>
-                <FieldDescription>Export the current structures and calculations to a database file.</FieldDescription>
+                <FieldDescription>Export the current structures, poses and calculations as a backup archive.</FieldDescription>
               </FieldContent>
               <div className="flex gap-2">
                 <Button
@@ -319,8 +343,8 @@ export function SettingsPanel() {
                     onClick={handleExport}
                     disabled={isExporting}
                 >
-                  <HardDriveDownload/>
-                  {isExporting ? 'Exporting...' : 'Export'}
+                  {isExporting ? <Loader2 className="animate-spin"/> : <HardDriveDownload/>}
+                  {exportLabel}
                 </Button>
                 <Button
                     variant="outline"
@@ -328,7 +352,8 @@ export function SettingsPanel() {
                     className="flex-1 h-9 grow"
                     onClick={handleImport}
                     disabled={isImporting}
-                ><HardDriveUpload/>
+                >
+                  {isImporting ? <Loader2 className="animate-spin"/> : <HardDriveUpload/>}
                   {isImporting ? 'Importing...' : 'Import'}
                 </Button>
               </div>

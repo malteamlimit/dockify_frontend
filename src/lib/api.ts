@@ -101,14 +101,33 @@ export async function getProps(smiles: string, job_id: string) {
 
 // ---------------------- DB Transfer ----------------------
 
-export async function exportDatabase() {
+export async function exportDatabase(onProgress?: (bytesReceived: number, total: number | null) => void) {
     const res = await fetch(`${API_BASE_URL}/database/export`, {
         method: 'GET',
     });
     if (!res.ok) {
         throw new Error((await res.json()).detail || 'Failed to export database')
     }
-    return res.blob();
+
+    const totalHeader = res.headers.get('content-length');
+    const total = totalHeader ? parseInt(totalHeader, 10) : null;
+
+    if (!res.body || !onProgress) {
+        return res.blob();
+    }
+
+    const reader = res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+    onProgress(0, total);
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        onProgress(received, total);
+    }
+    return new Blob(chunks as BlobPart[], { type: res.headers.get('content-type') || 'application/zip' });
 }
 
 export async function importDatabase(file: File) {

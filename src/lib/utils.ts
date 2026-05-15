@@ -153,13 +153,14 @@ export async function handlePDBDownload(job: DockingJob, index: number | 'best')
 }
 
 export function downloadBlob(blob: Blob, downloadName: string) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = url;
   link.download = downloadName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ---------------------- Validation ----------------------
