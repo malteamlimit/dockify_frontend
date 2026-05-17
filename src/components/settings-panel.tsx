@@ -85,6 +85,50 @@ export function SettingsPanel() {
     setAtomPairCstThreshold(Number(newValue.toFixed(1)));
   };
 
+  // local string state for the numeric inputs
+  const [qedInput, setQedInput] = React.useState(String(qedThreshold));
+  const [deltaGInput, setDeltaGInput] = React.useState(String(deltaGThreshold));
+  const [atomPairCstInput, setAtomPairCstInput] = React.useState(String(atomPairCstThreshold));
+
+  React.useEffect(() => { setQedInput(String(qedThreshold)); }, [qedThreshold]);
+  React.useEffect(() => { setDeltaGInput(String(deltaGThreshold)); }, [deltaGThreshold]);
+  React.useEffect(() => { setAtomPairCstInput(String(atomPairCstThreshold)); }, [atomPairCstThreshold]);
+
+  const commitQed = () => {
+    const n = parseFloat(qedInput);
+    if (Number.isFinite(n)) {
+      const v = Number(Math.min(1, Math.max(0, n)).toFixed(2));
+      setQedThreshold(v);
+      setQedInput(String(v));
+    } else {
+      setQedInput(String(qedThreshold));
+    }
+  };
+  const commitDeltaG = () => {
+    const n = parseFloat(deltaGInput);
+    if (Number.isFinite(n)) {
+      const v = Number(n.toFixed(1));
+      setDeltaGThreshold(v);
+      setDeltaGInput(String(v));
+    } else {
+      setDeltaGInput(String(deltaGThreshold));
+    }
+  };
+  const commitAtomPairCst = () => {
+    const n = parseFloat(atomPairCstInput);
+    if (Number.isFinite(n)) {
+      const v = Number(Math.max(0, n).toFixed(1));
+      setAtomPairCstThreshold(v);
+      setAtomPairCstInput(String(v));
+    } else {
+      setAtomPairCstInput(String(atomPairCstThreshold));
+    }
+  };
+
+  const commitOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") e.currentTarget.blur();
+  };
+
   // handle db export for backup purposes
   const handleExport = () => {
     setIsExporting(true)
@@ -192,8 +236,10 @@ export function SettingsPanel() {
                       step={0.05}
                       min={0}
                       max={1}
-                      value={qedThreshold}
-                      onChange={(e) => setQedThreshold(Number(e.target.value))}
+                      value={qedInput}
+                      onChange={(e) => setQedInput(e.target.value)}
+                      onBlur={commitQed}
+                      onKeyDown={commitOnEnter}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
@@ -253,8 +299,10 @@ export function SettingsPanel() {
                       type="number"
                       inputMode={'numeric'}
                       step={0.1}
-                      value={deltaGThreshold}
-                      onChange={(e) => setDeltaGThreshold(Number(e.target.value))}
+                      value={deltaGInput}
+                      onChange={(e) => setDeltaGInput(e.target.value)}
+                      onBlur={commitDeltaG}
+                      onKeyDown={commitOnEnter}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
@@ -299,8 +347,10 @@ export function SettingsPanel() {
                       inputMode={'numeric'}
                       step={0.5}
                       min={0}
-                      value={atomPairCstThreshold}
-                      onChange={(e) => setAtomPairCstThreshold(Number(e.target.value))}
+                      value={atomPairCstInput}
+                      onChange={(e) => setAtomPairCstInput(e.target.value)}
+                      onBlur={commitAtomPairCst}
+                      onKeyDown={commitOnEnter}
                       size={3}
                       className="h-8 !w-16 font-mono no-spinner"
                   />
