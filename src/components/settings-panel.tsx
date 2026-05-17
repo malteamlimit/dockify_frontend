@@ -282,12 +282,12 @@ export function SettingsPanel() {
             </Field>
           </FieldGroup>
           <FieldGroup className={'pt-8'}>
-            <FieldSeparator>Violation Settings</FieldSeparator>
+            <FieldSeparator>Default Violation Thresholds</FieldSeparator>
             <Field orientation="vertical">
               <FieldContent>
                 <FieldLabel htmlFor="dg-violation">Delta G</FieldLabel>
-                <FieldDescription>Changing this accepts docking results with higher Delta G values, without marking them
-                  as violations.</FieldDescription>
+                <FieldDescription>Default for new structures. Docking results with a Delta G at or above this
+                  value are marked as violations. Per-structure overrides are available from the job menu.</FieldDescription>
               </FieldContent>
               <ButtonGroup>
                 <InputGroup className="bg-background">
@@ -333,8 +333,8 @@ export function SettingsPanel() {
             <Field orientation="vertical">
               <FieldContent>
                 <FieldLabel htmlFor="apc-violation">Atom Pair Constraint</FieldLabel>
-                <FieldDescription>This setting defines the maximum allowed distance deviation for atom pair
-                  constraints.</FieldDescription>
+                <FieldDescription>Default for new structures. Docking results with an atom pair constraint at or
+                  above this value are marked as violations. Per-structure overrides are available from the job menu.</FieldDescription>
               </FieldContent>
               <ButtonGroup>
                 <InputGroup className="bg-background">
