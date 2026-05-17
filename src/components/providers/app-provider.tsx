@@ -2,13 +2,24 @@
 
 import { useEffect } from 'react';
 import { useDockingStore } from '@/store/docking-store';
+import { JobToaster } from '@/components/job-toaster';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { fetchJobs } = useDockingStore();
+  const { fetchJobs, connectStream, disconnectStream } = useDockingStore();
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+    let cancelled = false;
+    (async () => {
+      await fetchJobs();
+      // connect only after the initial REST load: fetchJobs replaces the whole
+      // jobs array, which would otherwise drop jobs already pushed by the stream.
+      if (!cancelled) connectStream();
+    })();
+    return () => {
+      cancelled = true;
+      disconnectStream();
+    };
+  }, [fetchJobs, connectStream, disconnectStream]);
 
   // fix: ketcher state update error muting in dev mode
   useEffect(() => {
@@ -36,5 +47,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <JobToaster />
+    </>
+  );
 }

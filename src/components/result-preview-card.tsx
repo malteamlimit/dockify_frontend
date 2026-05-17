@@ -119,8 +119,11 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                         {job.job_status == "draft" ? (
                             <Badge variant="secondary">Draft</Badge>
                         ) : ''}
+                        {job.job_status == "queued" ? (
+                            <Badge variant="secondary">Queued</Badge>
+                        ) : ''}
                         {job.job_status == "running" ? (
-                            <Badge variant="secondary">{job.progress_info}</Badge>
+                            <Badge variant="secondary">Running</Badge>
                         ) : ''}
                         {job.runs != 0 ? (
                             <Badge variant="default">{job.runs} Run{job.runs == 1 ? '' : 's'}</Badge>

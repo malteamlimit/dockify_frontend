@@ -109,6 +109,21 @@ export function perc2color(perc: number, min: number, max: number) {
   return '#' + ('000000' + h.toString(16)).slice(-6);
 }
 
+/**
+ * Computes the ΔG range across all jobs that have a valid best complex.
+ * Feeds perc2color so a ΔG value is coloured the same wherever it is shown.
+ * Returns { highest: 0, lowest: 0 } when no job has a valid result.
+ */
+export function deltaGRange(jobs: DockingJob[]): { highest: number; lowest: number } {
+  const values = jobs
+    .filter((job) => job.complexes && job.best_complex_nr != null)
+    .map((job) => job.complexes[job.best_complex_nr!].delta_g);
+  if (values.length === 0) {
+    return { highest: 0, lowest: 0 };
+  }
+  return { highest: Math.max(...values), lowest: Math.min(...values) };
+}
+
 
 
 // ---------------------- Downloads ----------------------

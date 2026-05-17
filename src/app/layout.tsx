@@ -34,7 +34,7 @@ export default function RootLayout({
         <AppProvider>
           <main>{children}</main>
         </AppProvider>
-        <Toaster richColors theme={'light'} />
+        <Toaster richColors closeButton expand visibleToasts={10} theme={'light'} />
       </StrictMode>
       </body>
     </html>

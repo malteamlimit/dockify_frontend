@@ -32,6 +32,7 @@ import ResultPreviewCard from "@/components/result-preview-card";
 import { Button } from "@/components/ui/button";
 import { SettingsPanel } from "@/components/settings-panel";
 import {useDockingStore} from "@/store/docking-store";
+import { deltaGRange } from "@/lib/utils";
 
 const navMain = [
   {
@@ -56,15 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [creditsDialogOpen, setCreditsDialogOpen] = React.useState(false);
   const { setSidebarOpen } = useSidebar();
 
-  // Calculate highest and lowest delta G values among jobs for color labels
-  const { highest, lowest } = React.useMemo(() => {
-    const validJobs = jobs.filter(job =>
-      job.complexes && job.best_complex_nr != null
-    );
-    const highest = Math.max(...validJobs.map((job) => job.complexes[job.best_complex_nr!].delta_g)) ?? 0
-    const lowest = Math.min(...validJobs.map((job) => job.complexes[job.best_complex_nr!].delta_g)) ?? 0
-    return { highest, lowest }
-  }, [jobs]);
+  // ΔG range among all jobs, for the colour scale of the ΔG badges.
+  const { highest, lowest } = React.useMemo(() => deltaGRange(jobs), [jobs]);
 
   // Auto-scroll to the latest job when a new job is added
   React.useEffect(() => {
