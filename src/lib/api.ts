@@ -11,14 +11,14 @@ export async function getAllJobs() {
 }
 
 
-export async function createJob(job: DockingJob) {
+export async function createJob(job: DockingJob): Promise<DockingJob> {
     const res = await fetch(`${API_BASE_URL}/jobs/create`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(job)
     });
     if (!res.ok) throw new Error('Failed to create job');
-    return res.json(); // job_id
+    return res.json(); // the created DockingJob (with an empty complexes array)
 }
 
 export async function updateName(jobId: string, new_name: string) {
@@ -61,31 +61,13 @@ export async function runDocking(jobId: string, runs: number, ) {
 }
 
 
-export async function wsGetJobUpdates(jobId: string, onMessage: (data: any) => void) {
-    const ws = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/jobs/${jobId}/status`);
-
-    ws.onopen = () => {
-        console.log(`WebSocket connection established for job ${jobId}`);
-    };
-
-    ws.onmessage = (event) => {
-        const data: DockingJob = JSON.parse(event.data);
-        console.log(`WebSocket message received for job ${jobId}:`, data);
-        onMessage(data);
-    };
-
-    ws.onerror = (error) => {
-        console.error(`WebSocket error for job ${jobId}:`, error);
-    };
-
-    ws.onclose = () => {
-        console.log(`WebSocket connection closed for job ${jobId}`);
-    };
-
-    return ws;
+export async function cancelDocking(jobId: string) {
+    const res = await fetch(`${API_BASE_URL}/jobs/${jobId}/cancel`, {
+        method: 'POST',
+    });
+    if (!res.ok) throw new Error(`Failed to cancel docking for job ${jobId}`);
+    return res.json();
 }
-
-
 
 
 export async function generateConf(smiles: string, job_id: string) {

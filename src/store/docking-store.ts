@@ -4,14 +4,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DockingJob } from '@/app/models';
 import {
+  cancelDocking,
   createJob,
   getAllJobs,
   getProps,
   runDocking as runDockingAPI,
   updateName,
   updateThresholds as updateThresholdsAPI,
-  wsGetJobUpdates
 } from "@/lib/api";
+import { startJobStream, stopJobStream, StreamStatus } from "@/lib/job-stream";
 import { useSettingsStore } from "@/store/settings-store";
 
 
@@ -25,6 +26,12 @@ interface DockingState {
   createJob: () => Promise<void>;
   createCopy: (job_id: string) => Promise<void>;
   removeJob: (jobId: string) => void;
+  upsertJob: (job: DockingJob) => void;
+
+  // ============ Job Stream ============
+  streamStatus: StreamStatus;
+  connectStream: () => void;
+  disconnectStream: () => void;
 
   // ============ Current Job Selection ============
   currentJobId: string | null;
@@ -49,9 +56,10 @@ interface DockingState {
   updateThresholds: (jobId: string, deltaGThreshold: number, atomPairCstThreshold: number) => Promise<void>;
 
   // ============ Job Status & Execution ============
-  setCurrentStatus: (job_status: "draft" | "running" | "completed" | "failed") => void;
+  setCurrentStatus: (job_status: DockingJob["job_status"]) => void;
   runPropertiesCalculation: () => Promise<void>;
   runDocking: (name: string, runs: number) => Promise<void>;
+  cancelJob: (jobId: string) => Promise<void>;
 
   // ============ UI Utilities ============
   refreshCurrentJobThumbnail: () => void;
@@ -165,40 +173,31 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
     }
   },
 
-  runDocking: async (name, runs) => set(async (state) => {
+  runDocking: async (name, runs) => {
     const currentJob = get().getCurrentJob();
     if (!currentJob) return;
 
-    state.setCurrentStatus("running")
-
+    const previousStatus = currentJob.job_status;
     try {
       if (name != currentJob.name) {
-        await updateName(currentJob!.job_id, name)
-        state.setCurrentName(name)
+        await updateName(currentJob.job_id, name);
+        get().setCurrentName(name);
       }
-
-      if (await runDockingAPI(currentJob!.job_id, runs)) {
-        await wsGetJobUpdates(currentJob!.job_id, (data) => {
-          set(state => {
-            const jobIndex = state.jobs.findIndex(job => job.job_id === data.job_id);
-            if (jobIndex >= 0) {
-              // Preserve thumbnailRefresh to maintain cache invalidation
-              const previousThumbnailRefresh = state.jobs[jobIndex].thumbnailRefresh;
-              state.jobs[jobIndex] = data
-              if (previousThumbnailRefresh) {
-                state.jobs[jobIndex].thumbnailRefresh = previousThumbnailRefresh;
-              }
-              if (data.error) {
-                state.jobs[jobIndex].error = data.error;
-              }
-            }
-          });
-        });
-      }
+      get().setCurrentStatus("queued");
+      await runDockingAPI(currentJob.job_id, runs);
     } catch (error) {
       console.error('Error running docking:', error);
+      get().setCurrentStatus(previousStatus);
     }
-  }),
+  },
+
+  cancelJob: async (jobId) => {
+    try {
+      await cancelDocking(jobId);
+    } catch (error) {
+      console.error('Error cancelling job:', error);
+    }
+  },
 
   // ============ Job Management Operations ============
   jobs: [],
@@ -222,8 +221,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
 
   createJob: async () => {
     const job = getDefaultJob()
-    const jobPublicRaw: string = await createJob(job)
-    const jobPublic: DockingJob = JSON.parse(jobPublicRaw);
+    const jobPublic = await createJob(job)
     set((state) => {
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
@@ -233,8 +231,7 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
 
   createCopy: async (job_id: string) => {
     const job = getCopy(get().jobs.find(job => job.job_id === job_id) || getDefaultJob())
-    const jobPublic_raw: string = await createJob(job)
-    const jobPublic: DockingJob = JSON.parse(jobPublic_raw);
+    const jobPublic = await createJob(job)
     set((state) => {
       state.jobs.push(jobPublic);
       state.currentJobId = jobPublic.job_id;
@@ -248,6 +245,35 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.currentJobId = null;
     }
   }),
+
+  // Insert a job, or replace it in place if already present. Used by the job
+  // stream to apply pushed updates (and newly created jobs from other clients).
+  upsertJob: (job) => set((state) => {
+    const jobIndex = state.jobs.findIndex(j => j.job_id === job.job_id);
+    if (jobIndex >= 0) {
+      // Preserve thumbnailRefresh to keep cache invalidation intact.
+      const previousThumbnailRefresh = state.jobs[jobIndex].thumbnailRefresh;
+      state.jobs[jobIndex] = job;
+      if (previousThumbnailRefresh) {
+        state.jobs[jobIndex].thumbnailRefresh = previousThumbnailRefresh;
+      }
+    } else {
+      state.jobs.push(job);
+    }
+  }),
+
+  // ============ Job Stream ============
+  streamStatus: 'closed',
+  connectStream: () => {
+    startJobStream({
+      onJob: (job) => get().upsertJob(job),
+      onDeleted: (jobId) => get().removeJob(jobId),
+      onStatusChange: (status) => set({ streamStatus: status }),
+    });
+  },
+  disconnectStream: () => {
+    stopJobStream();
+  },
 
   // ============ UI Utilities ============
   refreshCurrentJobThumbnail: () => set((state) => {
