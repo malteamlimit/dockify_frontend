@@ -27,7 +27,7 @@ export interface DockingJob {
   job_id: string;
   name: string;
   created: string;
-  job_status: "draft" | "running" | "completed" | "failed";
+  job_status: "draft" | "queued" | "running" | "completed" | "failed" | "cancelled";
 
   // ---- Molecular Structure ----
   smiles: string;
