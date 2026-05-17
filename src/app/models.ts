@@ -45,6 +45,12 @@ export interface DockingJob {
   constraints: ((number | number[] | string)[] | number)[];
   runs: number;
 
+  // ---- Violation Thresholds (per-job) ----
+  // A complex is a violation when delta_g >= delta_g_threshold
+  // or atom_pair_cst >= atom_pair_cst_threshold.
+  delta_g_threshold: number;
+  atom_pair_cst_threshold: number;
+
   // ---- Docking Results (predicted) ----
   best_complex_nr: number | null;
   complexes: Complex[];

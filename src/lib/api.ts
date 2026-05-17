@@ -30,6 +30,19 @@ export async function updateName(jobId: string, new_name: string) {
 }
 
 
+export async function updateThresholds(jobId: string, deltaGThreshold: number, atomPairCstThreshold: number) {
+    const params = new URLSearchParams({
+        delta_g_threshold: String(deltaGThreshold),
+        atom_pair_cst_threshold: String(atomPairCstThreshold),
+    });
+    const res = await fetch(`${API_BASE_URL}/jobs/${jobId}/thresholds?${params}`, {
+        method: 'PATCH',
+    });
+    if (!res.ok) throw new Error(`Failed to update thresholds for job ${jobId}`);
+    return res.json() as Promise<DockingJob>; // updated job with re-analyzed results
+}
+
+
 export async function deleteJobById(jobId: string) {
     const res = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
         method: 'DELETE',

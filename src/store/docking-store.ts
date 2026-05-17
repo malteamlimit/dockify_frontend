@@ -9,8 +9,10 @@ import {
   getProps,
   runDocking as runDockingAPI,
   updateName,
+  updateThresholds as updateThresholdsAPI,
   wsGetJobUpdates
 } from "@/lib/api";
+import { useSettingsStore } from "@/store/settings-store";
 
 
 interface DockingState {
@@ -42,6 +44,9 @@ interface DockingState {
     is_sub: boolean;
   }) => void;
   setCurrentName: (name: string) => void;
+
+  // ============ Violation Thresholds ============
+  updateThresholds: (jobId: string, deltaGThreshold: number, atomPairCstThreshold: number) => Promise<void>;
 
   // ============ Job Status & Execution ============
   setCurrentStatus: (job_status: "draft" | "running" | "completed" | "failed") => void;
@@ -99,6 +104,22 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       state.jobs[jobIndex].name = name;
     }
   }),
+
+  // ============ Violation Thresholds ============
+  updateThresholds: async (jobId, deltaGThreshold, atomPairCstThreshold) => {
+    const updated = await updateThresholdsAPI(jobId, deltaGThreshold, atomPairCstThreshold);
+    set((state) => {
+      const jobIndex = state.jobs.findIndex(job => job.job_id === jobId);
+      if (jobIndex >= 0) {
+        // Preserve thumbnailRefresh to keep cache invalidation intact
+        const previousThumbnailRefresh = state.jobs[jobIndex].thumbnailRefresh;
+        state.jobs[jobIndex] = updated;
+        if (previousThumbnailRefresh) {
+          state.jobs[jobIndex].thumbnailRefresh = previousThumbnailRefresh;
+        }
+      }
+    });
+  },
 
   // ============ Job Status Management ============
   setCurrentStatus: (job_status) => set((state) => {
@@ -280,6 +301,10 @@ export function getDefaultJob(): DockingJob {
     ],
     runs: 0,
 
+    // ---- Violation Thresholds (seeded from the global default settings) ----
+    delta_g_threshold: useSettingsStore.getState().deltaGThreshold,
+    atom_pair_cst_threshold: useSettingsStore.getState().atomPairCstThreshold,
+
     // ---- Docking Results ----
     best_complex_nr: null,
     complexes: [],
@@ -327,6 +352,10 @@ export function getCopy(jobOld: DockingJob): DockingJob {
       [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]
     ],
     runs: 0,
+
+    // ---- Violation Thresholds (copied from the original job) ----
+    delta_g_threshold: jobOld.delta_g_threshold,
+    atom_pair_cst_threshold: jobOld.atom_pair_cst_threshold,
 
     // ---- Docking Results (reset for new docking) ----
     best_complex_nr: null,
