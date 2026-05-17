@@ -29,12 +29,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {Button, buttonVariants} from "@/components/ui/button"
-import {Ellipsis, HardDriveDownload, Trash2, Copy} from "lucide-react";
+import {Ellipsis, HardDriveDownload, Trash2, Copy, SlidersHorizontal} from "lucide-react";
 
 import {DockingJob} from "@/app/models";
 import {perc2color, timeAgo, handlePDBDownload} from "@/lib/utils";
 import {useDockingStore, } from "@/store/docking-store";
 import {TagNameAndRename} from "@/components/tag-name-and-rename";
+import {JobThresholdsDialog} from "@/components/job-thresholds-dialog";
 import {deleteJobById} from "@/lib/api";
 import {toast} from "sonner";
 
@@ -44,9 +45,13 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
   const [isContextOpen, setIsContextOpen] = React.useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isThresholdsOpen, setIsThresholdsOpen] = React.useState(false);
   const isHovering = React.useRef(false);
   const [isImageLoaded, setImageLoaded] = React.useState(false);
   const currentJob = getCurrentJob();
+
+  // without a best result the card has ~4 rows fewer
+  const expandedHeight = job.best_complex_nr != null ? "h-[31rem]" : "h-[22.25rem]";
 
   const label = "text-xs font-semibold uppercase p-3 pb-1";
   const desc = "py-2 px-3 text-muted-foreground"
@@ -81,7 +86,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
           >
             <ContextMenuTrigger>
               <div
-                  className={`relative w-full h-[18.75rem] ${isExpanded ? 'h-[31rem] mb-32' : ''} transition-all duration-300 ease-in-out`}
+                  className={`relative w-full h-[18.75rem] ${isExpanded ? `${expandedHeight} mb-32` : ''} transition-all duration-300 ease-in-out`}
                   onMouseEnter={() => {
                     if (job.job_status == "completed") {
                       isHovering.current = true;
@@ -158,6 +163,10 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                             <HardDriveDownload/>
                             Download Best Pose as PDB
                           </DropdownMenuItem>) : ""}
+                          <DropdownMenuItem onClick={() => setIsThresholdsOpen(true)}>
+                            <SlidersHorizontal/>
+                            Violation Thresholds…
+                          </DropdownMenuItem>
                           <DropdownMenuItem variant="destructive" onClick={() => setIsDeleteOpen(true)}>
                             <Trash2/>
                             Delete
@@ -167,7 +176,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                     </div>
 
                     <div className="w-full">
-                      {(job.job_status != "draft" && job.job_status != "failed" && job.best_complex_nr != null) ?
+                      {(job.job_status != "draft" && job.job_status != "failed") ?
                           <table className="w-full" style={{tableLayout: 'fixed'}}>
                             <colgroup>
                               <col className="w-1/4"/>
@@ -176,6 +185,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                               <col className="w-1/4"/>
                             </colgroup>
                             <tbody>
+                            {job.best_complex_nr != null && (<>
                             <tr className="border-b">
                               <td colSpan={4} className={label}>Best result</td>
                             </tr>
@@ -219,8 +229,9 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                                 </Tooltip>
                               </td>
                             </tr>
+                            </>)}
                             <tr className="border-b">
-                              <td colSpan={4} className={label.concat(" pt-4")}>Ligand Props</td>
+                              <td colSpan={4} className={label.concat(job.best_complex_nr != null ? " pt-4" : "")}>Ligand Props</td>
                             </tr>
                             <tr className="border-b">
                               <td colSpan={2} className={desc}>Weight</td>
@@ -282,6 +293,10 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
                 <HardDriveDownload/>
                 Download Best Pose as PDB
               </ContextMenuItem>) : ""}
+              <ContextMenuItem onClick={() => setIsThresholdsOpen(true)}>
+                <SlidersHorizontal/>
+                Violation Thresholds…
+              </ContextMenuItem>
               <ContextMenuItem className="text-red-500 hover:text-red-600 group" onClick={() => setIsDeleteOpen(true)}>
                 <Trash2 className="text-red-500 group-hover:text-red-600"/>
                 <span className="group-hover:text-red-600">Delete</span>
@@ -304,6 +319,7 @@ export default function ResultPreviewCard({ job, highest, lowest }: { job: Docki
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        <JobThresholdsDialog job={job} open={isThresholdsOpen} onOpenChange={setIsThresholdsOpen} />
       </div>
   )
 }
