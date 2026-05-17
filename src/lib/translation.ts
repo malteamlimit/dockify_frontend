@@ -1,8 +1,5 @@
 
 const translations: Record<string, string> = {
-  DELTA_G: "The Delta G value is greater than 0",
-  ATOM_PAIR_CST: "The Atom Pair Constraint value is higher than 15",
-
   total_score: "Total Score",
   atom_pair_cst: "Atom Pair Cst.",
   atom_attraction: "Atom Attraction",

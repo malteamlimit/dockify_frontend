@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import { useDockingStore } from "@/store/docking-store";
-import { useSettingsStore } from "@/store/settings-store";
 import { validateComplexViolations } from "@/lib/utils";
 
 import { HistoChart } from "@/components/results/histo-chart";
@@ -13,16 +12,9 @@ import { RmsdChart } from "@/components/results/rmsd-chart";
 
 export function DockingResults() {
   const currentJob = useDockingStore(state => state.getCurrentJob());
-  const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
-  const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
 
   // State for highlighting complexes when hovering over histogram bins
   const [highlightedComplexIndices, setHighlightedComplexIndices] = React.useState<number[]>([]);
-
-  // filter complexes that have no violations for the current thresholds
-  const validComplexes = currentJob?.complexes?.filter(complex => {
-    return validateComplexViolations(complex, deltaGThreshold, atomPairCstThreshold).length === 0;
-  }) ?? [];
 
   if (currentJob?.weight === null) {
     return (
@@ -53,6 +45,11 @@ export function DockingResults() {
       </Card>
     );
   }
+
+  // filter complexes that have no violations for the job's thresholds
+  const validComplexes = currentJob.complexes?.filter(complex =>
+    validateComplexViolations(complex, currentJob.delta_g_threshold, currentJob.atom_pair_cst_threshold).length === 0
+  ) ?? [];
 
   return (
     <Card className="w-full mb-4">

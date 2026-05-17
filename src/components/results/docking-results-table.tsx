@@ -4,12 +4,10 @@ import {Complex, DockingJob} from "@/app/models";
 import {ModuleRegistry, AllCommunityModule} from 'ag-grid-community';
 import {Badge} from "@/components/ui/badge";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
-import {translate} from "@/lib/translation";
 import {HardDriveDownload, OctagonAlert} from "lucide-react";
 import {themeQuartz} from 'ag-grid-community';
 import {Button} from "@/components/ui/button";
 import {handlePDBDownload, validateDeltaG, validateAtomPairCst} from "@/lib/utils";
-import {useSettingsStore} from "@/store/settings-store";
 import {useDockingStore} from "@/store/docking-store";
 ModuleRegistry.registerModules([ AllCommunityModule ]);
 
@@ -19,13 +17,11 @@ interface ComplexWithIndex extends Complex {
 
 interface ViolationCellProps {
   value: number;
-  constraintName: string;
-  violations?: string[];
+  hasViolation: boolean;
+  message: string;
 }
 
-function ViolationCell({ value, constraintName, violations }: ViolationCellProps) {
-  const hasViolation = violations?.includes(constraintName);
-
+function ViolationCell({ value, hasViolation, message }: ViolationCellProps) {
   if (!hasViolation) {
     return <span>{value.toFixed(4)}</span>;
   }
@@ -42,7 +38,7 @@ function ViolationCell({ value, constraintName, violations }: ViolationCellProps
       </TooltipTrigger>
       <TooltipContent>
         <div className="text-sm flex flex-col items-center align-middle gap-1">
-          <div className="text-red-300">{translate(constraintName)}</div>
+          <div className="text-red-300">{message}</div>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -52,8 +48,8 @@ function ViolationCell({ value, constraintName, violations }: ViolationCellProps
 export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { job: DockingJob, highlightedComplexIndices?: number[] }) {
   const complexList = job.complexes ?? [];
   const bestComplexId = job.best_complex_nr;
-  const deltaGThreshold = useSettingsStore((state) => state.deltaGThreshold);
-  const atomPairCstThreshold = useSettingsStore((state) => state.atomPairCstThreshold);
+  const deltaGThreshold = job.delta_g_threshold;
+  const atomPairCstThreshold = job.atom_pair_cst_threshold;
 
   const selectedComplexIndex = useDockingStore((state) => state.selectedComplexIndex);
   const setSelectedComplexIndex = useDockingStore((state) => state.setSelectedComplexIndex);
@@ -85,8 +81,8 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
         return (
           <ViolationCell
             value={params.value}
-            constraintName="DELTA_G"
-            violations={hasDeltaGViolation ? ["DELTA_G"] : []}
+            hasViolation={hasDeltaGViolation}
+            message={`Delta G is at or above the threshold of ${deltaGThreshold}.`}
           />
         );
       },
@@ -100,8 +96,8 @@ export function DockingResultsTable({ job, highlightedComplexIndices = [] }: { j
         return (
           <ViolationCell
             value={params.value}
-            constraintName="ATOM_PAIR_CST"
-            violations={hasAtomPairCstViolation ? ["ATOM_PAIR_CST"] : []}
+            hasViolation={hasAtomPairCstViolation}
+            message={`Atom Pair Constraint is at or above the threshold of ${atomPairCstThreshold}.`}
           />
         );
       },
