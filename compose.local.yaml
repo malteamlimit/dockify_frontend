@@ -1,6 +1,4 @@
-# Move this file to the root of the project (root of front- and backend)and run `docker compose -f compose.local.yaml up`
-# to start the application without pre-built images.
-# The base image however has to be built before running this compose file, since backend relies on it.
+# The base image has to be built before running this compose file, since backend relies on it.
 
 name: dockify
 
@@ -8,7 +6,7 @@ services:
 
   frontend:
     build:
-      context: ./dockify_frontend
+      context: ../dockify_frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
@@ -20,13 +18,14 @@ services:
 
   backend:
     build:
-      context: ./dockify_backend
+      context: ../dockify_backend
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
       - ./backend/data:/app/data
       - poses_vol:/app/app/static/poses
       - previews_vol:/app/app/static/previews
+      - targets_vol:/app/app/static/targets
     env_file:
       - .env
     ports:
@@ -35,3 +34,4 @@ services:
 volumes:
   poses_vol:
   previews_vol:
+  targets_vol:

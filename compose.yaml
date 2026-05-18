@@ -22,6 +22,7 @@ services:
 #       - ./backend/input:/app/input
       - poses_vol:/app/app/static/poses
       - previews_vol:/app/app/static/previews
+      - targets_vol:/app/app/static/targets
     env_file:
       - .env
     ports:
@@ -30,3 +31,4 @@ services:
 volumes:
   poses_vol:
   previews_vol:
+  targets_vol:
