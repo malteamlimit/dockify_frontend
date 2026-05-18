@@ -1,12 +1,17 @@
 "use client"
 import * as React from "react"
-import {exportDatabase, importDatabase, resetDatabase} from "@/lib/api";
-import {downloadBlob} from "@/lib/utils";
-import {useDockingStore} from "@/store/docking-store";
-import {useSettingsStore} from "@/store/settings-store";
+import { exportDatabase, getActiveTarget, getTargetNoligandUrl, importDatabase, resetDatabase } from "@/lib/api";
+import { downloadBlob } from "@/lib/utils";
+import { useDockingStore } from "@/store/docking-store";
+import { useSettingsStore } from "@/store/settings-store";
+import { useTargetStore } from "@/store/target-store";
+import { useUIStore } from "@/store/ui-store";
 
-import {toast} from "sonner";
-import {Button, buttonVariants} from "@/components/ui/button";
+import { toast } from "sonner";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
     Field,
@@ -40,7 +45,9 @@ import {
   Trash2,
   HardDriveDownload,
   HardDriveUpload,
-  Loader2
+  Loader2,
+  Copy,
+  Check,
 } from "lucide-react"
 
 export function SettingsPanel() {
@@ -51,6 +58,19 @@ export function SettingsPanel() {
   const fetchJobs = useDockingStore((state) => state.fetchJobs)
 
   const [isResetOpen, setIsResetOpen] = React.useState(false)
+
+  const activeTarget = useTargetStore((state) => state.activeTarget)
+  const [copiedPymol, setCopiedPymol] = React.useState(false)
+
+  const handleCopyPymol = async () => {
+    if (!activeTarget) return
+    const url = getTargetNoligandUrl(activeTarget.id)
+    try {
+      await navigator.clipboard.writeText(`pymol "${url}"`)
+      setCopiedPymol(true)
+      setTimeout(() => setCopiedPymol(false), 2000)
+    } catch { /* ignore */ }
+  }
 
   const qedThreshold = useSettingsStore((state) => state.qedThreshold);
   const enforceSubstructure = useSettingsStore((state) => state.enforceSubstructure);
@@ -175,23 +195,25 @@ export function SettingsPanel() {
 
     setIsImporting(true)
     importDatabase(file)
+        .then(() => fetchJobs())
         .then(() => {
           toast.success('Database imported successfully')
-          return fetchJobs()
-        })
-        .then(() => {
+
           // Select the latest job after import
           const jobs = useDockingStore.getState().jobs
           if (jobs.length > 0) {
             useDockingStore.getState().setCurrentJobId(jobs[jobs.length - 1].job_id)
           }
 
-          // Reset file input
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-          }
+          // Sync the target store with whatever is now in the DB
+          return getActiveTarget()
+              .then((t) => useTargetStore.getState().setActiveTarget(t))
+              .catch(() => useTargetStore.getState().clearActiveTarget())
         })
-        .catch((e) => toast.error('Error: ' + e.message))
+        .then(() => {
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        })
+        .catch((e) => toast.error(e.message))
         .finally(() => setIsImporting(false))
   }
 
@@ -200,7 +222,12 @@ export function SettingsPanel() {
     resetDatabase()
         .then(() => {
           toast.success('Database successfully deleted')
+          useDockingStore.setState({ jobs: [], currentJobId: null, selectedComplexIndex: null })
+          useUIStore.getState().requestSidebarTab('History')
           return fetchJobs()
+        })
+        .then(() => {
+          useTargetStore.getState().clearActiveTarget()
         })
         .catch((e: Error) => toast.error('Error: ' + e.message))
         .finally(() => setIsExporting(false))
@@ -217,6 +244,47 @@ export function SettingsPanel() {
               onChange={handleFileChange}
               style={{display: 'none'}}
           />
+          {activeTarget ? (
+            <Card className="p-4 gap-3">
+              <CardContent className="p-0 flex flex-col gap-3">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-semibold text-sm">{activeTarget.full_name}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="font-mono text-xs cursor-pointer hover:bg-accent transition-colors"
+                          onClick={() => window.open(`https://www.rcsb.org/structure/${activeTarget.pdb_code}`, '_blank')}
+                        >
+                          {activeTarget.pdb_code}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>Open structure on RCSB PDB</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <p className="text-xs text-muted-foreground text-center leading-snug">{activeTarget.description}</p>
+                <p className="text-xs text-muted-foreground text-center leading-snug">To switch targets, use <span className="font-medium text-foreground">Reset Database</span> below.</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        className="h-8 w-full text-xs"
+                        onClick={handleCopyPymol}
+                      >
+                        {copiedPymol ? <Check /> : <Copy />}
+                        {copiedPymol ? 'Copied!' : 'Copy PyMOL Command'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Opens the receptor without ligand in PyMOL for investigation</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardContent>
+            </Card>
+          ) : null}
           <FieldGroup className={'pt-4'}>
             <FieldSeparator>Threshold Settings</FieldSeparator>
             <Field orientation="vertical">
