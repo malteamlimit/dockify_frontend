@@ -139,6 +139,47 @@ export async function importDatabase(file: File) {
     return res.json();
 }
 
+// ---------------------- Targets ----------------------
+
+export interface TargetSummary {
+  id: string;
+  name: string;
+  full_name: string;
+  pdb_code: string;
+  description: string;
+}
+
+export interface TargetInfo extends TargetSummary {
+  core_smiles: string;
+  constraints: Array<[number, string, [number, number, number], number, number]> | null;
+}
+
+export async function getTargets(): Promise<TargetSummary[]> {
+  const res = await fetch(`${API_BASE_URL}/targets`);
+  if (!res.ok) throw new Error('Failed to fetch targets');
+  return res.json();
+}
+
+export async function getActiveTarget(): Promise<TargetInfo> {
+  const res = await fetch(`${API_BASE_URL}/target`);
+  if (!res.ok) throw new Error('No target selected');
+  return res.json();
+}
+
+export async function selectTarget(targetId: string): Promise<TargetInfo> {
+  const res = await fetch(`${API_BASE_URL}/target/${targetId}`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to select target: ${targetId}`);
+  return res.json();
+}
+
+export function getTargetPreviewUrl(targetId: string): string {
+  return `${API_BASE_URL}/target/${targetId}/preview`;
+}
+
+export function getTargetNoligandUrl(targetId: string): string {
+  return `${API_BASE_URL}/static/targets/${targetId}_noligand.pdb`;
+}
+
 export async function resetDatabase() {
     const res = await fetch(`${API_BASE_URL}/database/reset`, {
         method: 'POST',

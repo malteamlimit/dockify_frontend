@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import { startJobStream, stopJobStream, StreamStatus } from "@/lib/job-stream";
 import { useSettingsStore } from "@/store/settings-store";
+import { useTargetStore } from "@/store/target-store";
 
 
 interface DockingState {
@@ -36,7 +37,7 @@ interface DockingState {
   // ============ Current Job Selection ============
   currentJobId: string | null;
   getCurrentJob: () => DockingJob | null;
-  setCurrentJobId: (job_id: string) => void;
+  setCurrentJobId: (job_id: string | null) => void;
 
   // ============ Job Structure & Properties ============
   setCurrentSmiles: (smiles: string) => void;
@@ -208,9 +209,8 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
       set({jobs, isLoading: false});
 
       set((state) => {
-        if (state.currentJobId == null) {
+        if (state.currentJobId == null && jobs.length > 0) {
           state.currentJobId = jobs[jobs.length - 1].job_id;
-          console.log('Set current job id:', state.currentJobId);
         }
       });
     } catch (error) {
@@ -296,6 +296,9 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
  * All molecular properties are set to null initially and calculated via runPropertiesCalculation
  */
 export function getDefaultJob(): DockingJob {
+  const target = useTargetStore.getState().activeTarget;
+  if (!target) throw new Error("No docking target selected.");
+
   return {
     // ---- Core Identity ----
     job_id: uuidv4(),
@@ -303,9 +306,8 @@ export function getDefaultJob(): DockingJob {
     created: new Date().toISOString(),
     job_status: 'draft',
 
-    // ---- Molecular Structure ----
-    // TODO: Consider fetching default SMILES from Settings store
-    smiles: 'O=CN1CCC2(CNC2)CC1',
+    // ---- Molecular Structure (seeded from active target) ----
+    smiles: target.core_smiles,
     sdf: null,
 
     // ---- Molecular Properties (initialized as null, calculated later) ----
@@ -316,15 +318,8 @@ export function getDefaultJob(): DockingJob {
     qed: 0,
     is_sub: false,
 
-    // ---- Docking Configuration ----
-    // TODO: Fetch constraints from Settings store
-    constraints: [
-      [364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125],
-      [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25],
-      [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25],
-      [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25],
-      [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]
-    ],
+    // ---- Docking Configuration (seeded from active target) ----
+    constraints: target.constraints,
     runs: 0,
 
     // ---- Violation Thresholds (seeded from the global default settings) ----
@@ -368,15 +363,8 @@ export function getCopy(jobOld: DockingJob): DockingJob {
     qed: jobOld.qed,
     is_sub: jobOld.is_sub,
 
-    // ---- Docking Configuration ----
-    // TODO: Fetch constraints from Settings store
-    constraints: [
-      [364, 'HG', [-6.7520, -0.1555, 13.0855], 1.80, 0.125],
-      [65, 'OD2', [-7.1638, 5.8368, 16.5862], 3.23, 0.25],
-      [65, 'OD2', [-7.5181, 3.1143, 15.5623], 3.25, 0.25],
-      [89, 'CB', [-6.0966, 5.3594, 15.7673], 3.70, 0.25],
-      [86, 'CD', [-7.1638, 5.8368, 16.5862], 5.11, 0.50]
-    ],
+    // ---- Docking Configuration (inherited from original job) ----
+    constraints: jobOld.constraints,
     runs: 0,
 
     // ---- Violation Thresholds (copied from the original job) ----

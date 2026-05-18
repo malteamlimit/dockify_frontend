@@ -42,7 +42,7 @@ export interface DockingJob {
   is_sub: boolean;
 
   // ---- Docking Configuration ----
-  constraints: ((number | number[] | string)[] | number)[];
+  constraints: ((number | number[] | string)[] | number)[] | null;
   runs: number;
 
   // ---- Violation Thresholds (per-job) ----
