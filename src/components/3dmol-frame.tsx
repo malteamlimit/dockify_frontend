@@ -21,7 +21,14 @@ const ThreeDmolFrame = () => {
 
   useEffect(() => {
     if (!viewerRef.current) return
-    if (!currentJob) return;
+
+    if (!currentJob) {
+      viewerRef.current.clear()
+      viewerRef.current.render()
+      setCurrentModel("Molecule Editor")
+      setIsError(false)
+      return
+    }
 
     const loadModel = async () => {
       viewerRef.current!.clear()

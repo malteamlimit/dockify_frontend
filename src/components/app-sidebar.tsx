@@ -31,7 +31,8 @@ import { CreditsDialog } from "@/components/credits-dialog";
 import ResultPreviewCard from "@/components/result-preview-card";
 import { Button } from "@/components/ui/button";
 import { SettingsPanel } from "@/components/settings-panel";
-import {useDockingStore} from "@/store/docking-store";
+import { useDockingStore } from "@/store/docking-store";
+import { useUIStore } from "@/store/ui-store";
 import { deltaGRange } from "@/lib/utils";
 
 const navMain = [
@@ -56,6 +57,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [creditsDialogOpen, setCreditsDialogOpen] = React.useState(false);
   const { setSidebarOpen } = useSidebar();
+
+  const pendingSidebarTab = useUIStore((state) => state.pendingSidebarTab);
+  const clearPendingSidebarTab = useUIStore((state) => state.clearPendingSidebarTab);
+
+  React.useEffect(() => {
+    if (!pendingSidebarTab) return;
+    const item = navMain.find((i) => i.title === pendingSidebarTab);
+    if (item) {
+      setActiveItem(item);
+      setSidebarOpen(true);
+    }
+    clearPendingSidebarTab();
+  }, [pendingSidebarTab, clearPendingSidebarTab, setSidebarOpen]);
 
   // ΔG range among all jobs, for the colour scale of the ΔG badges.
   const { highest, lowest } = React.useMemo(() => deltaGRange(jobs), [jobs]);

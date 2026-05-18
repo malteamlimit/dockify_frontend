@@ -38,7 +38,13 @@ function KetcherFrame() {
 
     // loading molecule when currentJobId changes
     React.useEffect(() => {
-      if (!ketcherRef.current || !currentJobId) return;
+      if (!ketcherRef.current) return;
+
+      if (!currentJobId) {
+        isLoadingRef.current = true;
+        ketcherRef.current.setMolecule('').finally(() => { isLoadingRef.current = false; });
+        return;
+      }
 
       const smiles = useDockingStore.getState().getCurrentJob()?.smiles;
       const status = useDockingStore.getState().getCurrentJob()?.job_status;
