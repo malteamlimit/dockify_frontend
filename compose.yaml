@@ -3,7 +3,7 @@ name: dockify
 services:
 
   frontend:
-    image: optimalte/dockify-frontend:dev
+    image: optimalte/dockify-frontend:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
@@ -14,12 +14,11 @@ services:
       - "3000:3000"
 
   backend:
-    image: optimalte/dockify-backend:dev
+    image: optimalte/dockify-backend:latest
     platform: linux/amd64
     restart: unless-stopped
     volumes:
       - ./backend/data:/app/data
-#       - ./backend/input:/app/input
       - poses_vol:/app/app/static/poses
       - previews_vol:/app/app/static/previews
       - targets_vol:/app/app/static/targets
