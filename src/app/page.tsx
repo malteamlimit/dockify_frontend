@@ -23,7 +23,7 @@ import {toast} from "sonner";
 export default function Home() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
   const createCopy = useDockingStore((state) => state.createCopy);
-  const showMoleculeSVG = (currentJob?.job_status == "completed" || currentJob?.job_status == "running");
+  const showMoleculeSVG = !!currentJob && currentJob.job_status !== "draft";
 
   const [displayedJobId, setDisplayedJobId] = React.useState(currentJob?.job_id);
 
