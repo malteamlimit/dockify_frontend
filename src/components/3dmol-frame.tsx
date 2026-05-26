@@ -9,6 +9,7 @@ import { useDockingStore } from "@/store/docking-store"
 const ThreeDmolFrame = () => {
   const viewerRef = useRef<$3Dmol.GLViewer | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const loadedKeyRef = useRef<string | null>(null)
 
   const currentJob = useDockingStore(state => state.getCurrentJob());
   const selectedComplexIndex = useDockingStore(state => state.selectedComplexIndex);
@@ -31,9 +32,6 @@ const ThreeDmolFrame = () => {
     }
 
     const loadModel = async () => {
-      viewerRef.current!.clear()
-      setIsError(false)
-
       // Determine which complex to load: selected complex from table, best complex, or molecule editor
       let complexNr: number | null = null;
 
@@ -44,12 +42,23 @@ const ThreeDmolFrame = () => {
         complexNr = currentJob.best_complex_nr;
       }
 
+      // Skip reload if the same model is already displayed
+      const key = complexNr !== null
+        ? `${currentJob.job_id}:complex:${complexNr}`
+        : `${currentJob.job_id}:sdf:${currentJob.sdf}`;
+      if (loadedKeyRef.current === key) return;
+      loadedKeyRef.current = key;
+
+      viewerRef.current!.clear()
+      setIsError(false)
+
       if (complexNr !== null) {
         try {
           const url = `${process.env.NEXT_PUBLIC_API_URL}/static/poses/${currentJob.job_id}_${complexNr}.pdb`;
           const response = await fetch(url);
           console.log("Response:", response);
           if (!response.ok) {
+            loadedKeyRef.current = null
             setIsError(true)
             return
           }
@@ -60,6 +69,7 @@ const ThreeDmolFrame = () => {
           setCurrentModel("Complex (Run " + (complexNr + 1) + ")")
         } catch (error) {
           console.error("Error loading conformer in 3DMol viewer:", error)
+          loadedKeyRef.current = null
           setIsError(true)
         }
       } else {
