@@ -38,7 +38,7 @@ const ThreeDmolFrame = () => {
       // Only use selectedComplexIndex if there are actually complexes available
       if (selectedComplexIndex !== null && currentJob.complexes && currentJob.complexes.length > 0) {
         complexNr = selectedComplexIndex;
-      } else if (currentJob.best_complex_nr !== null && currentJob.complexes && currentJob.complexes.length > 0) {
+      } else if (currentJob.best_complex_nr !== null) {
         complexNr = currentJob.best_complex_nr;
       }
 
@@ -127,7 +127,7 @@ const ThreeDmolFrame = () => {
     let complexNr: number | null = null
     if (selectedComplexIndex !== null && currentJob.complexes && currentJob.complexes.length > 0) {
       complexNr = selectedComplexIndex
-    } else if (currentJob.best_complex_nr !== null && currentJob.complexes && currentJob.complexes.length > 0) {
+    } else if (currentJob.best_complex_nr !== null) {
       complexNr = currentJob.best_complex_nr
     }
 
