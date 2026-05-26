@@ -19,13 +19,14 @@ const ThreeDmolFrame = () => {
   const [currentModel, setCurrentModel] = useState("Molecule Editor")
   const [isError, setIsError] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [viewerReady, setViewerReady] = useState(false)
 
   useEffect(() => {
-    if (!viewerRef.current) return
+    if (!viewerReady) return
 
     if (!currentJob) {
-      viewerRef.current.clear()
-      viewerRef.current.render()
+      viewerRef.current!.clear()
+      viewerRef.current!.render()
       setCurrentModel("Molecule Editor")
       setIsError(false)
       return
@@ -84,7 +85,7 @@ const ThreeDmolFrame = () => {
 
     void loadModel()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentJob?.sdf, currentJob?.best_complex_nr, currentJob?.complexes?.length, selectedComplexIndex, currentJob?.job_id])
+  }, [viewerReady, currentJob?.sdf, currentJob?.best_complex_nr, currentJob?.complexes?.length, selectedComplexIndex, currentJob?.job_id])
 
   const toggleSpin = () => {
     if (!viewerRef.current) return
@@ -114,6 +115,7 @@ const ThreeDmolFrame = () => {
         viewerRef.current.render()
         viewerRef.current.setStyle({stick: {'color': 'spectrum'}, sphere: {radius: 0.4}})
         // toggleSpin()
+        setViewerReady(true)
       } catch (error) {
         console.error("Error initializing 3DMol viewer:", error)
       }
