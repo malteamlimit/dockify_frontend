@@ -302,7 +302,7 @@ export function getDefaultJob(): DockingJob {
   return {
     // ---- Core Identity ----
     job_id: uuidv4(),
-    name: 'Unknown Structure',
+    name: 'Unnamed Structure',
     created: new Date().toISOString(),
     job_status: 'draft',
 

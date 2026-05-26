@@ -79,7 +79,7 @@ export function ButtonRunDocking({variant = "new", disableReason}: { variant?: "
               <div className="space-y-2">
                 <h4 className="leading-none font-medium">Docking</h4>
                 <p className="text-muted-foreground text-sm">
-                  Let&#39;s dock our designed structure{variant === "new" ? null : " (again)"}!
+                  Let&#39;s dock your designed structure{variant === "new" ? null : " (again)"}!
                 </p>
               </div>
               <div className="grid gap-2">
