@@ -53,9 +53,8 @@ function TargetPreviewViewer({ pdbUrl }: { pdbUrl: string }) {
         if (cancelled || !viewer) return
 
         viewer.addModel(pdbText, "pdb")
-        viewer.setStyle({ hetflag: false }, { cartoon: { color: "lightblue", opacity: 0.85 } })
-        viewer.setStyle({ hetflag: true }, { stick: { colorscheme: "greenCarbon" }, sphere: { radius: 0.3 } })
-        viewer.zoomTo({ hetflag: true })
+        viewer.setStyle({}, { cartoon: { color: "spectrum" } })
+        viewer.zoomTo()
         viewer.render()
       } catch {
         // Non-fatal: canvas may not be ready yet; ResizeObserver will retry.
@@ -99,12 +98,11 @@ function TargetCard({
 
   return (
     <Card
-      className={`cursor-pointer pt-0 pb-4 transition-all overflow-hidden w-72 flex-shrink-0 ${
+      className={`pt-0 pb-4 transition-all overflow-hidden w-72 flex-shrink-0 flex flex-col ${
         isPreSelected
           ? "border-primary ring-2 ring-primary shadow-md"
-          : "hover:border-primary hover:shadow-md"
+          : ""
       } ${isSelecting ? "opacity-60 pointer-events-none" : ""}`}
-      onClick={() => onPreSelect(target.id)}
     >
       {/* Stop clicks from the 3D viewer bubbling up to card selection */}
       <div
@@ -118,36 +116,46 @@ function TargetCard({
           </div>
         )}
       </div>
-      <CardContent className="px-4 pt-2 space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-base">{target.name}</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  className="text-xs font-mono cursor-pointer hover:bg-accent transition-colors"
-                  onClick={(e) => { e.stopPropagation(); window.open(`https://www.rcsb.org/structure/${target.pdb_code}`, '_blank') }}
-                >
-                  {target.pdb_code}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>Open structure on RCSB PDB</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {isPreSelected && (
-            <CheckCircle2 className="ml-auto text-primary" size={16} />
-          )}
+      <CardContent className="px-4 flex flex-col flex-1">
+        <div className="space-y-1 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-base">{target.name}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono cursor-pointer hover:bg-accent transition-colors"
+                    onClick={(e) => { e.stopPropagation(); window.open(`https://www.rcsb.org/structure/${target.pdb_code}`, '_blank') }}
+                  >
+                    {target.pdb_code}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>Open structure on RCSB PDB</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {isPreSelected && (
+              <CheckCircle2 className="ml-auto text-primary" size={16} />
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground font-medium">{target.full_name}</p>
+          <p className="text-xs text-muted-foreground leading-snug">
+            {target.description}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground font-medium">{target.full_name}</p>
-        <p className="text-xs text-muted-foreground leading-snug line-clamp-2">
-          {target.description}
-        </p>
         <Button
-          className={`w-full mt-6 h-8 text-xs cursor-pointer transition-none ${isPreSelected ? "" : "opacity-0 pointer-events-none"}`}
-          onClick={(e) => { e.stopPropagation(); onConfirm(target.id) }}
+          variant={isPreSelected ? "default" : "outline"}
+          className="w-full mt-4 h-8 text-xs cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (isPreSelected) {
+              onConfirm(target.id)
+            } else {
+              onPreSelect(target.id)
+            }
+          }}
         >
-          Confirm this target
+          {isPreSelected ? "Confirm this target" : "Select this target"}
         </Button>
       </CardContent>
     </Card>
@@ -194,11 +202,11 @@ export function TargetSelectionDialog({
     <Dialog open={open}>
       <DialogContent
         showCloseButton={false}
-        className="!w-fit !max-w-[95vw] max-h-[90vh] overflow-auto"
+        className="w-fit! max-w-[95vw]! max-h-[90vh] overflow-hidden flex flex-col"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogHeader className="text-center sm:text-center pb-2">
+        <DialogHeader className="text-center sm:text-center pb-2 shrink-0">
           <DialogTitle className="text-2xl font-bold">Welcome to Dockify</DialogTitle>
           <DialogDescription className="text-sm">
             Select a protein target to begin docking. This can be changed later by resetting the database.
@@ -210,17 +218,19 @@ export function TargetSelectionDialog({
             <Loader2 className="animate-spin text-muted-foreground" size={36} />
           </div>
         ) : (
-          <div className="flex flex-nowrap justify-center gap-4">
-            {targets.map((target) => (
-              <TargetCard
-                key={target.id}
-                target={target}
-                onPreSelect={setPreSelectedId}
-                onConfirm={handleConfirm}
-                isPreSelected={preSelectedId === target.id}
-                isSelecting={selectingId === target.id}
-              />
-            ))}
+          <div className="-mx-6 overflow-x-auto">
+            <div className="flex flex-nowrap justify-center gap-4 min-w-min px-6 pt-1 pb-2">
+              {targets.map((target) => (
+                <TargetCard
+                  key={target.id}
+                  target={target}
+                  onPreSelect={setPreSelectedId}
+                  onConfirm={handleConfirm}
+                  isPreSelected={preSelectedId === target.id}
+                  isSelecting={selectingId === target.id}
+                />
+              ))}
+            </div>
           </div>
         )}
       </DialogContent>
