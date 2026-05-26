@@ -22,6 +22,7 @@ function KetcherFrame() {
 
     const [hasError, setHasError] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
+    const [conformerFailed, setConformerFailed] = React.useState(false);
     const [isLocked, setIsLocked] = React.useState(true);
     // workaround to prevent scroll jump on ketcher init
     const scrollPositionRef = React.useRef(0);
@@ -35,6 +36,10 @@ function KetcherFrame() {
     const currentJobIsSub = useDockingStore((state) => state.getCurrentJob()?.is_sub);
     const qedThreshold = useSettingsStore((state) => state.qedThreshold);
     const enforceSub = useSettingsStore((state) => state.enforceSubstructure);
+
+    React.useEffect(() => {
+      setConformerFailed(false);
+    }, [currentJobId]);
 
     // loading molecule when currentJobId changes
     React.useEffect(() => {
@@ -98,8 +103,11 @@ function KetcherFrame() {
 
             ketcher.getSmiles().then(async smiles => {
                 const conformer = await generateConf(smiles, currentJobId!);
+                setConformerFailed(false);
                 updateStructure(smiles, conformer);
-              }).catch(console.error);
+              }).catch(() => {
+                setConformerFailed(true);
+              });
           };
 
           subscribedKetcherRef.current = ketcher;
@@ -176,6 +184,13 @@ function KetcherFrame() {
       currentJobIsSub === false && enforceSub,
       'Error: Required Substructure Missing',
       'Please add the required substructure to the molecule before proceeding.',
+      'error'
+    );
+
+    usePersistentToast(
+      conformerFailed,
+      'Error: Invalid Molecule',
+      'No 3D conformer could be generated for this structure. The molecule may be non-conformable or invalid.',
       'error'
     );
 
