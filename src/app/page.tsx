@@ -15,6 +15,7 @@ import KetcherFrameClient from "@/components/ketcher-frame-client"
 import ThreeDmolFrameClient from "@/components/3dmol-frame-client"
 import DockingResults from "@/components/results/docking-results";
 import { LigandPropertiesBar } from "@/components/ligand-properties-bar";
+import { NoStructurePlaceholder } from "@/components/no-structure-placeholder";
 
 import { useDockingStore } from "@/store/docking-store";
 import {Copy} from "lucide-react";
@@ -24,6 +25,7 @@ export default function Home() {
   const currentJob = useDockingStore((state) => state.getCurrentJob());
   const createCopy = useDockingStore((state) => state.createCopy);
   const showMoleculeSVG = !!currentJob && currentJob.job_status !== "draft";
+  const showPlaceholder = !currentJob;
 
   const [displayedJobId, setDisplayedJobId] = React.useState(currentJob?.job_id);
 
@@ -50,7 +52,7 @@ export default function Home() {
         <AppHeader />
         <LigandPropertiesBar />
         <div className="flex flex-col gap-4">
-          <div className="h-[800px] flex px-4 gap-4">
+          <div className="h-[800px] flex px-4 gap-4 relative">
             <div className="w-1/2 relative">
 
               {/* Ketcher */}
@@ -100,10 +102,19 @@ export default function Home() {
                 </div>
               </Card>
             </div>
+
+            {/* Placeholder */}
+            <div
+                className={`absolute inset-0 mx-4 z-9 transition-opacity duration-300 ${
+                    showPlaceholder ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+            >
+              <NoStructurePlaceholder/>
+            </div>
           </div>
-          <div className="bg-card px-4 pb-4 overflow-hidden flex-1">
+          {currentJob && <div className="bg-card px-4 pb-4 overflow-hidden flex-1">
             <DockingResults/>
-          </div>
+          </div>}
         </div>
       </SidebarInset>
     </SidebarProvider>

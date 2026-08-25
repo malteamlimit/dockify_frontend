@@ -222,12 +222,12 @@ export function SettingsPanel() {
     resetDatabase()
         .then(() => {
           toast.success('Database successfully deleted')
+          // Clear the target before fetchJobs() so the draft-job effect in AppProvider
+          // cannot fire for the target that was just discarded.
+          useTargetStore.getState().clearActiveTarget()
           useDockingStore.setState({ jobs: [], currentJobId: null, selectedComplexIndex: null })
           useUIStore.getState().requestSidebarTab('History')
           return fetchJobs()
-        })
-        .then(() => {
-          useTargetStore.getState().clearActiveTarget()
         })
         .catch((e: Error) => toast.error('Error: ' + e.message))
         .finally(() => setIsExporting(false))

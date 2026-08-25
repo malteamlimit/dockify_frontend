@@ -10,6 +10,8 @@ import { getActiveTarget, type TargetInfo } from '@/lib/api';
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { fetchJobs, connectStream, disconnectStream } = useDockingStore();
   const needsTargetSelection = useTargetStore((state) => state.needsTargetSelection);
+  const activeTarget = useTargetStore((state) => state.activeTarget);
+  const isLoading = useDockingStore((state) => state.isLoading);
   const { setActiveTarget } = useTargetStore();
 
   useEffect(() => {
@@ -32,6 +34,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       disconnectStream();
     };
   }, [fetchJobs, connectStream, disconnectStream, setActiveTarget]);
+
+  // Covers first start, post-reset target selection and database import.
+  // jobs.length is deliberately not a dependency: deleting the last job should
+  // leave the user on the empty state instead of silently recreating a draft.
+  useEffect(() => {
+    if (!activeTarget || isLoading) return;
+    void useDockingStore.getState().ensureDraftJob();
+  }, [activeTarget, isLoading]);
 
   const handleTargetSelected = (target: TargetInfo) => {
     setActiveTarget(target);

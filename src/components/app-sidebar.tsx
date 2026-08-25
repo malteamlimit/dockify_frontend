@@ -3,6 +3,7 @@
 import * as React from "react"
 import Image from "next/image";
 import {History, Info, Plus, Settings} from "lucide-react"
+import { toast } from "sonner"
 
 import {
   Sidebar,
@@ -32,6 +33,7 @@ import ResultPreviewCard from "@/components/result-preview-card";
 import { Button } from "@/components/ui/button";
 import { SettingsPanel } from "@/components/settings-panel";
 import { useDockingStore } from "@/store/docking-store";
+import { useTargetStore } from "@/store/target-store";
 import { useUIStore } from "@/store/ui-store";
 import { deltaGRange } from "@/lib/utils";
 
@@ -50,6 +52,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setCurrentJobId, createJob } = useDockingStore();
   const jobs = useDockingStore(state => state.jobs);
   const isLoading = useDockingStore(state => state.isLoading);
+  const isCreatingJob = useDockingStore(state => state.isCreatingJob);
+  const activeTarget = useTargetStore(state => state.activeTarget);
+
+  const handleCreateJob = () => {
+    createJob().catch(() => toast.error("Could not create a new structure. Please try again."));
+  };
 
   const [sortBy, setSortBy] = React.useState<string>("time-desc");
   const [activeItem, setActiveItem] = React.useState(navMain[0]);
@@ -193,9 +201,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarGroup className={"relative top-0 border-b p-4 pt-4"}>
                 {isLoading ?
                     <Skeleton className="h-9 w-full" />
-                    : <Button variant="outline" onClick={createJob}>Create new structure <Plus/></Button>}
+                    : <Button
+                        variant="outline"
+                        onClick={handleCreateJob}
+                        disabled={isCreatingJob || !activeTarget}
+                      >Create new structure <Plus/></Button>}
               </SidebarGroup>
-              <SidebarGroup className={!isLoading && jobs.length == 0 ? "h-full justify-center px-0 pt-0" : "px-0 pt-0"}>
+              <SidebarGroup className="px-0 pt-0">
                 <SidebarGroupContent>
                   {
                     isLoading ? (
@@ -205,12 +217,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </div>
                       ))
                     ) : (
-                        jobs.length == 0 ? (
-                          <div className="h-full w-full flex flex-col items-center justify-center">
-                            <Image src="/dna_broken.svg" alt="broken dna icon" width={80} height={80} className="mb-4 rotate-45" />
-                            <p className="text-center text-muted-foreground">No structures found.<br />Please start designing your molecule.</p>
-                          </div>
-                        ) : (
                         jobs
                           .slice()
                           .sort((a, b) => {
@@ -238,7 +244,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               >
                                 <ResultPreviewCard job={job} highest={highest} lowest={lowest}/>
                               </div>
-                          )))
+                          ))
                     )
                   }
                 </SidebarGroupContent>

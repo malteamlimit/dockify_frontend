@@ -100,9 +100,10 @@ function KetcherFrame() {
 
             const { updateStructure } = useDockingStore.getState();
             const currentJobId = useDockingStore.getState().currentJobId;
+            if (!currentJobId) return;
 
             ketcher.getSmiles().then(async smiles => {
-                const conformer = await generateConf(smiles, currentJobId!);
+                const conformer = await generateConf(smiles, currentJobId);
                 setConformerFailed(false);
                 updateStructure(smiles, conformer);
               }).catch(() => {

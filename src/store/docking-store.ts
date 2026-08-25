@@ -20,11 +20,13 @@ import { useTargetStore } from "@/store/target-store";
 interface DockingState {
   // ============ Loading State ============
   isLoading: boolean;
+  isCreatingJob: boolean;
 
   // ============ Job Management ============
   jobs: DockingJob[];
   fetchJobs: () => Promise<void>;
   createJob: () => Promise<void>;
+  ensureDraftJob: () => Promise<void>;
   createCopy: (job_id: string) => Promise<void>;
   removeJob: (jobId: string) => void;
   upsertJob: (job: DockingJob) => void;
@@ -73,6 +75,7 @@ interface DockingState {
 
 export const useDockingStore = create(immer<DockingState>((set, get) => ({
   isLoading: true,
+  isCreatingJob: false,
 
   // ============ Current Job Selection ============
   currentJobId: null,
@@ -220,13 +223,26 @@ export const useDockingStore = create(immer<DockingState>((set, get) => ({
   },
 
   createJob: async () => {
-    const job = getDefaultJob()
-    const jobPublic = await createJob(job)
-    set((state) => {
-      state.jobs.push(jobPublic);
-      state.currentJobId = jobPublic.job_id;
-    })
-    await get().runPropertiesCalculation();
+    if (get().isCreatingJob) return;
+    set({isCreatingJob: true});
+    try {
+      const job = getDefaultJob()
+      const jobPublic = await createJob(job)
+      set((state) => {
+        state.jobs.push(jobPublic);
+        state.currentJobId = jobPublic.job_id;
+      })
+      await get().runPropertiesCalculation();
+    } finally {
+      set({isCreatingJob: false});
+    }
+  },
+
+  ensureDraftJob: async () => {
+    const state = get();
+    if (state.isLoading || state.isCreatingJob || state.jobs.length > 0) return;
+    if (!useTargetStore.getState().activeTarget) return;
+    await state.createJob().catch((e) => console.error('Error creating initial draft job:', e));
   },
 
   createCopy: async (job_id: string) => {
