@@ -101,7 +101,7 @@ export default function Home() {
               </Card>
             </div>
           </div>
-          <div className="bg-card px-4 overflow-hidden flex-1">
+          <div className="bg-card px-4 pb-4 overflow-hidden flex-1">
             <DockingResults/>
           </div>
         </div>

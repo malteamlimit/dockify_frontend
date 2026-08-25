@@ -52,7 +52,7 @@ export function DockingResults() {
   ) ?? [];
 
   return (
-    <Card className="w-full mb-4">
+    <Card className="w-full">
       <CardContent>
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4 h-full w-full">
