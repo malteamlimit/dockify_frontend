@@ -27,7 +27,7 @@ const ThreeDmolFrame = () => {
     if (!currentJob) {
       viewerRef.current!.clear()
       viewerRef.current!.render()
-      setCurrentModel("Molecule Editor")
+      setCurrentModel("—")
       setIsError(false)
       return
     }
