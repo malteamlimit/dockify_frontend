@@ -5,7 +5,8 @@ services:
   frontend:
     image: optimalte/dockify-frontend:latest
     platform: linux/amd64
-    restart: unless-stopped
+    network_mode: bridge
+    restart: "no"
     env_file:
       - .env
     depends_on:
@@ -16,7 +17,8 @@ services:
   backend:
     image: optimalte/dockify-backend:latest
     platform: linux/amd64
-    restart: unless-stopped
+    network_mode: bridge
+    restart: "no"
     volumes:
       - ./backend/data:/app/data
       - poses_vol:/app/app/static/poses

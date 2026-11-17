@@ -81,6 +81,12 @@ docker compose up -d
 The services will pull your images from Docker Hub automatically.
 
 
+#### Network Mode (Default Bridge)
+
+Both compose files run the containers on Docker's default bridge network (`docker0`, `172.17.x.x`) via `network_mode: bridge`. They do not create a project network, because an auto-created `dockify_default` network can collide with corporate IP ranges. The browser reaches the backend through the published port `localhost:8000`, so container name resolution is not needed.
+
+
+
 #### Docker Image Platform Warning
 
 Configured for `linux/amd64` only!
